@@ -15,14 +15,25 @@ local MILESTONES = {
 }
 
 -- Humorous report templates. {current}, {content}, {lifetime}, {dura_lost} are substituted.
+-- {current} = current content cost, {context} = "this dungeon"/"this raid"/"today",
+-- {lifetime} = lifetime total, {dura_lost} = durability hits count
 local REPORT_TEMPLATES = {
-    "[ShieldTax] My shield repair bill this {content}: {current}. Thanks, Shield Block.",
-    "[ShieldTax] Shield Block has cost me {current} this {content}. Other tanks pay 0g for their active mitigation.",
-    "[ShieldTax] {content} Shield Tax: {current} ({dura_lost} durability hits). Blizzard pls.",
+    "[ShieldTax] My shield repair bill {context}: {current}. Thanks, Shield Block.",
+    "[ShieldTax] Shield Block has cost me {current} {context}. Other tanks pay 0g for their active mitigation.",
+    "[ShieldTax] Shield Tax {context}: {current} ({dura_lost} durability hits). Blizzard pls.",
     "[ShieldTax] Lifetime Shield Tax: {lifetime}. I could have bought a mount with that.",
-    "[ShieldTax] {current} this {content}. {lifetime} lifetime. Shield Block isn't free, folks.",
+    "[ShieldTax] {current} {context}. {lifetime} lifetime. Shield Block isn't free, folks.",
     "[ShieldTax] Other tanks press their mitigation for free. I just paid {current} to press mine.",
-    "[ShieldTax] Shield Tax so far today: {current} in {content}. {lifetime} lifetime. Cha-ching.",
+    "[ShieldTax] Shield Tax {context}: {current}. {lifetime} lifetime. Cha-ching.",
+}
+
+-- Context phrases that read naturally in a sentence
+local CONTENT_CONTEXT = {
+    mythicplus = "this M+",
+    raid       = "this raid",
+    dungeon    = "this dungeon",
+    openworld  = "today",
+    other      = "today",
 }
 
 local VALID_CHANNELS = {
@@ -71,9 +82,10 @@ function ChatReporter:Report(channel)
     local template = REPORT_TEMPLATES[math.random(#REPORT_TEMPLATES)]
 
     -- Substitute variables
+    local context = CONTENT_CONTEXT[contentType] or "today"
     local msg = template
     msg = msg:gsub("{current}", calc:FormatGold(currentCost))
-    msg = msg:gsub("{content}", contentLabel)
+    msg = msg:gsub("{context}", context)
     msg = msg:gsub("{lifetime}", lt and calc:FormatGold(lt.totalCostCopper) or "0g")
     msg = msg:gsub("{dura_lost}", tostring(dg.durabilityLost))
 

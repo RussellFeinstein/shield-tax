@@ -8,6 +8,7 @@ local frame
 local contentText
 local lifetimeText
 local statusText
+local duraText
 local shieldIcon
 local isLocked = true
 
@@ -65,6 +66,14 @@ function Display:Init()
     lifetimeText:SetJustifyH("LEFT")
     lifetimeText:SetTextColor(0.7, 0.7, 0.7)
     lifetimeText:SetText("Lifetime Total: 0g")
+
+    -- Shield durability percentage (right side of title)
+    duraText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    duraText:SetPoint("RIGHT", frame, "RIGHT", -8, 0)
+    duraText:SetPoint("TOP", titleText, "TOP", 0, 0)
+    duraText:SetJustifyH("RIGHT")
+    duraText:SetTextColor(0.7, 0.7, 0.7)
+    duraText:SetText("")
 
     -- Status text (shown when no shield equipped)
     statusText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -125,6 +134,7 @@ function Display:Update()
         -- No shield — show inactive state
         contentText:Hide()
         lifetimeText:Hide()
+        duraText:Hide()
         statusText:Show()
         return
     end
@@ -183,11 +193,26 @@ function Display:Update()
             lifetimeText:SetText("Lifetime Total: " .. calc:FormatGold(filteredTotal))
         end
 
+        -- Shield durability
+        if tracker then
+            local dura = tracker:GetShieldDurability()
+            if dura then
+                duraText:SetText("Shield: " .. string.format("%.0f%%", dura * 100))
+                duraText:Show()
+            else
+                duraText:Hide()
+            end
+        end
+
         -- Resize frame to fit content
         local textWidth = math.max(
             contentText:IsShown() and contentText:GetStringWidth() or 0,
             lifetimeText:GetStringWidth()
         )
+        -- Account for dura text on the right side of the title
+        local duraWidth = duraText:IsShown() and duraText:GetStringWidth() or 0
+        local titleWidth = 60 + duraWidth + 10  -- "Shield Tax" + gap + dura
+        textWidth = math.max(textWidth, titleWidth)
         local iconWidth = shieldIcon:GetWidth()
         frame:SetWidth(iconWidth + 6 + textWidth + 24)
     end
@@ -263,7 +288,6 @@ function Display:ShowTooltip()
         local lt = charData.lifetime
 
         -- Lifetime breakdown by content type
-        GameTooltip:AddLine(" ")
         GameTooltip:AddLine("Lifetime Breakdown", 0.7, 0.7, 1)
 
         local db = ShieldTax.db and ShieldTax.db.profile
@@ -286,20 +310,10 @@ function Display:ShowTooltip()
             end
         end
 
-        if lt.deathTaxCopper > 0 then
-            GameTooltip:AddDoubleLine("  Death Tax:", calc:FormatGold(lt.deathTaxCopper), 0.7, 0.5, 0.5, 0.7, 0.5, 0.5)
-        end
-
-        GameTooltip:AddLine(" ")
         GameTooltip:AddDoubleLine("Lifetime Total:", calc:FormatGold(filteredTotal), 1, 0.82, 0, 1, 1, 1)
 
-        -- Shield durability
-        if tracker then
-            local dura = tracker:GetShieldDurability()
-            if dura then
-                GameTooltip:AddLine(" ")
-                GameTooltip:AddDoubleLine("Shield:", string.format("%.0f%%", dura * 100), 0.7, 0.7, 1, 1, 1, 1)
-            end
+        if lt.deathTaxCopper > 0 then
+            GameTooltip:AddDoubleLine("Death Tax:", calc:FormatGold(lt.deathTaxCopper), 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
         end
     end
 

@@ -68,8 +68,8 @@ describe("ChatReporter", function()
 
             local msg = Mock.chatMessages[1].msg
             -- Should not contain unsubstituted template variables
-            assert.is_nil(msg:find("{dungeon}"))
-            assert.is_nil(msg:find("{session}"))
+            assert.is_nil(msg:find("{current}"))
+            assert.is_nil(msg:find("{context}"))
             assert.is_nil(msg:find("{lifetime}"))
             assert.is_nil(msg:find("{dura_lost}"))
         end)

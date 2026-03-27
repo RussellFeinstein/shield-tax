@@ -285,6 +285,8 @@ function ShieldTax:HandleContentCommand(arg)
     db.contentToggles[arg] = not (db.contentToggles[arg] ~= false)
     local status = db.contentToggles[arg] and "enabled" or "disabled"
     self:Print(getContentLabels()[arg] .. " tracking " .. status .. ".")
+
+    if self.Display then self.Display:Update() end
 end
 
 function ShieldTax:PrintContentStats()
