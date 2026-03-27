@@ -2,7 +2,7 @@
 local ShieldTax = LibStub("AceAddon-3.0"):NewAddon("ShieldTax", "AceEvent-3.0", "AceConsole-3.0")
 _G.ShieldTax = ShieldTax
 
-ShieldTax.VERSION = "1.0.0"
+ShieldTax.VERSION = "1.0.1"
 
 local DB_DEFAULTS = {
     global = {

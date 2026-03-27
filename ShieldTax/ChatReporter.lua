@@ -24,7 +24,7 @@ local REPORT_TEMPLATES = {
     "[ShieldTax] Lifetime Shield Tax: {lifetime}. I could have bought a mount with that.",
     "[ShieldTax] {current} {context}. {lifetime} lifetime. Shield Block isn't free, folks.",
     "[ShieldTax] Other tanks press their mitigation for free. I just paid {current} to press mine.",
-    "[ShieldTax] Shield Tax {context}: {current}. {lifetime} lifetime. Cha-ching.",
+    "[ShieldTax] Shield Tax {context}: {current}. {lifetime} lifetime. Please Blizz.",
 }
 
 -- Context phrases that read naturally in a sentence

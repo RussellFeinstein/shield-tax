@@ -1,10 +1,10 @@
 # ShieldTax
 
-**Track the hidden gold cost of Shield Block.** Cha-ching!
+**Track the hidden gold cost of Shield Block.**
 
 Warriors pay a per-press tax on their core active mitigation that no other tank class does. Every time you block, your shield has a chance to lose durability — costing you roughly **25 gold per M+ dungeon** just for pressing Shield Block.
 
-ShieldTax makes this invisible cost visible (and audible) with a running gold counter and a satisfying cha-ching every time your shield takes the hit.
+ShieldTax makes this invisible cost visible (and audible) with a running gold counter and a sound alert every time your shield takes the hit.
 
 ## Features
 
@@ -125,4 +125,4 @@ shield-tax/
 
 ## Version
 
-1.0.0
+1.0.1
