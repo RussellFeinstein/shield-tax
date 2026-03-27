@@ -30,10 +30,13 @@ function CostCalculator:GetCostPerPoint(itemLink)
         effectiveIlvl = GetDetailedItemLevelInfo(itemLink)
     end
 
-    -- Get base item info
-    local info = { C_Item.GetItemInfo(itemLink) }
-    if not info[1] then
-        -- Item not cached, use fallback
+    -- Get base item info (C_Item.GetItemInfo deprecated in 12.0 but still functional)
+    local info
+    if C_Item and C_Item.GetItemInfo then
+        info = { C_Item.GetItemInfo(itemLink) }
+    end
+    if not info or not info[1] then
+        -- Item not cached or API unavailable, use fallback
         return self:CalculateCostPerPoint(FALLBACK_ILVL, FALLBACK_QUALITY)
     end
 

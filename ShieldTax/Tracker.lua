@@ -25,11 +25,11 @@ function Tracker:Init()
     self:UpdateShieldInfo()
     self:SnapshotDurability()
 
-    -- Register events
+    -- Register events (AceEvent passes event name as first arg to function handlers)
     ShieldTax:RegisterEvent("PLAYER_REGEN_DISABLED", function() Tracker:OnCombatStart() end)
     ShieldTax:RegisterEvent("PLAYER_REGEN_ENABLED", function() Tracker:OnCombatEnd() end)
     ShieldTax:RegisterEvent("UPDATE_INVENTORY_DURABILITY", function() Tracker:OnDurabilityChanged() end)
-    ShieldTax:RegisterEvent("PLAYER_EQUIPMENT_CHANGED", function(_, slot) Tracker:OnEquipmentChanged(slot) end)
+    ShieldTax:RegisterEvent("PLAYER_EQUIPMENT_CHANGED", function(event, slot) Tracker:OnEquipmentChanged(slot) end)
     ShieldTax:RegisterEvent("PLAYER_DEAD", function() Tracker:OnPlayerDead() end)
     ShieldTax:RegisterEvent("PLAYER_ALIVE", function() Tracker:OnPlayerAlive() end)
     ShieldTax:RegisterEvent("PLAYER_UNGHOST", function() Tracker:OnPlayerAlive() end)
@@ -50,7 +50,7 @@ function Tracker:UpdateShieldInfo()
         -- Item data not cached yet; assume shield for now, retry on ITEM_DATA_LOAD_RESULT
         hasShield = true
         shieldItemLink = itemLink
-        ShieldTax:RegisterEvent("ITEM_DATA_LOAD_RESULT", function()
+        ShieldTax:RegisterEvent("ITEM_DATA_LOAD_RESULT", function(event)
             Tracker:UpdateShieldInfo()
             Tracker:SnapshotDurability()
             ShieldTax:UnregisterEvent("ITEM_DATA_LOAD_RESULT")
@@ -97,6 +97,9 @@ end
 
 function Tracker:OnPlayerAlive()
     recentDeath = false
+    -- Re-snapshot durability after resurrection to prevent phantom costs
+    -- from the death durability hit being double-counted
+    self:SnapshotDurability()
 end
 
 function Tracker:OnEquipmentChanged(slot)

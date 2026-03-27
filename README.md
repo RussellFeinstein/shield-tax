@@ -15,12 +15,14 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 - **Warrior-only** — silently inactive on other classes
 - **12.0 (Midnight) compatible** — no CLEU dependency
 
-### Coming Soon (v0.2.0+)
+### Sound & Display (v0.2.0)
 
-- On-screen gold counter display (draggable frame)
-- Session / dungeon / lifetime statistics
-- Sound throttle for large pulls
-- Dungeon auto-detection (M+ and regular)
+- On-screen gold counter display (draggable frame with dungeon + session cost)
+- Configurable sound effects: coin jingle, cash register, coin drop, money bag, or mute
+- Sound throttle prevents spam on large pulls
+- Session / dungeon / lifetime statistics with Death Tax tracked separately
+- Dungeon auto-detection (M+ keystones and regular dungeons/raids)
+- Dungeon history (last 50, ring buffer)
 
 ### Coming in v0.3.0
 
@@ -45,10 +47,17 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 | Command | Action |
 |---------|--------|
 | `/st` | Toggle display frame |
+| `/st sound [coin\|register\|coins\|none]` | Set sound effect |
+| `/st sound test` | Play current sound |
+| `/st session` | Print session stats |
+| `/st lifetime` | Print lifetime stats |
+| `/st reset` | Reset dungeon counter |
+| `/st reset session` | Reset session counter |
+| `/st reset all` | Reset ALL data |
+| `/st move` / `/st lock` | Unlock/lock display position |
+| `/st minimap` | Toggle minimap icon |
 | `/st version` | Show addon version |
 | `/st help` | List all commands |
-
-*More commands available in v0.2.0+*
 
 ## How It Works
 
@@ -94,11 +103,17 @@ shield-tax/
 │   ├── ShieldTax.toc    # Addon manifest
 │   ├── Core.lua         # Init, class guard, slash commands
 │   ├── Tracker.lua      # Durability monitoring + combat state
-│   └── CostCalculator.lua  # Gold cost formula
+│   ├── CostCalculator.lua  # Gold cost formula
+│   ├── SoundManager.lua # Sound effects + throttle
+│   ├── Stats.lua        # Session/dungeon/lifetime stats
+│   └── Display.lua      # On-screen gold counter frame
 ├── tests/               # busted tests (not included in addon)
 │   ├── wow_api_mock.lua # WoW API mock layer
 │   ├── test_tracker.lua
-│   └── test_cost_calculator.lua
+│   ├── test_cost_calculator.lua
+│   ├── test_sound_manager.lua
+│   ├── test_stats.lua
+│   └── test_display.lua
 ├── pkgmeta.yaml         # CurseForge packager config
 ├── CHANGELOG.md
 └── README.md
@@ -110,4 +125,4 @@ shield-tax/
 
 ## Version
 
-0.1.0
+0.2.0

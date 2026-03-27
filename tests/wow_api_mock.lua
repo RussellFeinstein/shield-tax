@@ -32,6 +32,7 @@ Mock.serverTime = 1700000000  -- GetServerTime() epoch
 
 -- Instance state
 Mock.inInstance = false
+Mock.instanceType = nil  -- "party", "raid", "pvp", "arena", or nil
 Mock.instanceInfo = { "Test Dungeon", "party", 1, "Normal", 0, 0, false, 1, 5 }
 
 -- Combat lockdown
@@ -97,7 +98,7 @@ function _G.GetServerTime()
 end
 
 function _G.IsInInstance()
-    return Mock.inInstance
+    return Mock.inInstance, Mock.instanceType
 end
 
 function _G.GetInstanceInfo()
@@ -108,8 +109,8 @@ function _G.InCombatLockdown()
     return Mock.inCombatLockdown
 end
 
-function _G.PlaySound(soundKitID)
-    table.insert(Mock.soundsPlayed, soundKitID)
+function _G.PlaySound(soundKitID, channel)
+    table.insert(Mock.soundsPlayed, { id = soundKitID, channel = channel })
 end
 
 function _G.PlaySoundFile(path, channel)
@@ -118,7 +119,7 @@ end
 
 function _G.GetAddOnMetadata(addon, field)
     if addon == "ShieldTax" and field == "Version" then
-        return "0.1.0"
+        return "0.2.0"
     end
     return nil
 end
@@ -141,6 +142,15 @@ _G.SOUNDKIT = {
     MONEY_FRAME_CLOSE = 892,
 }
 
+-- C_ChallengeMode namespace
+_G.C_ChallengeMode = _G.C_ChallengeMode or {}
+function _G.C_ChallengeMode.GetActiveKeystoneInfo()
+    return Mock.keystoneLevel or 0
+end
+Mock.keystoneLevel = nil
+
+function _G.SendChatMessage() end
+
 ----------------------------------------------------------------------
 -- Frame Mock
 ----------------------------------------------------------------------
@@ -156,9 +166,9 @@ function FrameMT:SetMovable() end
 function FrameMT:EnableMouse() end
 function FrameMT:RegisterForDrag() end
 function FrameMT:SetClampedToScreen() end
-function FrameMT:Show() end
-function FrameMT:Hide() end
-function FrameMT:IsShown() return false end
+function FrameMT:Show() self._visible = true end
+function FrameMT:Hide() self._visible = false end
+function FrameMT:IsShown() return self._visible or false end
 function FrameMT:SetAlpha() end
 function FrameMT:SetScale() end
 function FrameMT:SetBackdrop() end
@@ -167,6 +177,17 @@ function FrameMT:SetText() end
 function FrameMT:SetFont() end
 function FrameMT:SetJustifyH() end
 function FrameMT:GetStringWidth() return 100 end
+
+function FrameMT:SetFrameStrata() end
+function FrameMT:StartMoving() end
+function FrameMT:StopMovingOrSizing() end
+function FrameMT:ClearAllPoints() end
+function FrameMT:GetPoint() return "CENTER", nil, "CENTER", 0, 0 end
+function FrameMT:SetTextColor() end
+function FrameMT:SetOwner() end
+function FrameMT:AddLine() end
+function FrameMT:AddDoubleLine() end
+function FrameMT:SetBackdropBorderColor() end
 
 function FrameMT:SetScript(event, handler)
     self.scripts = self.scripts or {}
@@ -279,16 +300,18 @@ function AceAddon:GetArgs(str, num)
     return unpack(args)
 end
 
---- Fire a mock event on an addon
+--- Fire a mock event on an addon.
+--- Matches AceEvent-3.0 dispatch: function handlers get (event, ...),
+--- string method handlers get (self, event, ...).
 function Mock.FireEvent(addonName, event, ...)
     local addon = addons[addonName]
     if not addon then return end
     local handler = addon.registeredEvents[event]
     if handler then
         if type(handler) == "function" then
-            handler(...)
+            handler(event, ...)
         elseif type(handler) == "string" then
-            addon[handler](addon, ...)
+            addon[handler](addon, event, ...)
         end
     end
 end
@@ -365,6 +388,8 @@ function Mock.reset()
     Mock.gameTime = 0
     Mock.serverTime = 1700000000
     Mock.inInstance = false
+    Mock.instanceType = nil
+    Mock.keystoneLevel = nil
     Mock.inCombatLockdown = false
     Mock.soundsPlayed = {}
     Mock.soundFilesPlayed = {}

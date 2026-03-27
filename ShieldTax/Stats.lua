@@ -1,0 +1,210 @@
+---@class ShieldTax
+local ShieldTax = LibStub("AceAddon-3.0"):GetAddon("ShieldTax")
+
+local Stats = {}
+ShieldTax.Stats = Stats
+
+-- Session data: local table, NOT saved — resets on logout and /reload
+local session = {
+    costCopper = 0,
+    durabilityLost = 0,
+    durabilityEvents = 0,
+    deathTaxCopper = 0,
+}
+
+-- Current dungeon data: resets on instance entry or manual reset
+local dungeon = {
+    costCopper = 0,
+    durabilityLost = 0,
+    durabilityEvents = 0,
+    deathTaxCopper = 0,
+    instanceName = nil,
+    keystoneLevel = nil,
+    startTime = nil,
+}
+
+local DUNGEON_HISTORY_CAP = 50
+
+function Stats:Init()
+    -- Register dungeon detection events
+    ShieldTax:RegisterEvent("PLAYER_ENTERING_WORLD", function() Stats:OnEnterWorld() end)
+    ShieldTax:RegisterEvent("ZONE_CHANGED_NEW_AREA", function() Stats:OnZoneChanged() end)
+    ShieldTax:RegisterEvent("CHALLENGE_MODE_START", function() Stats:OnKeystoneStart() end)
+    ShieldTax:RegisterEvent("CHALLENGE_MODE_COMPLETED", function() Stats:OnKeystoneCompleted() end)
+end
+
+--- Record a Shield Tax event (called from Core.lua).
+---@param costCopper number
+---@param durabilityLost number
+function Stats:RecordShieldTax(costCopper, durabilityLost)
+    session.costCopper = session.costCopper + costCopper
+    session.durabilityLost = session.durabilityLost + durabilityLost
+    session.durabilityEvents = session.durabilityEvents + 1
+
+    dungeon.costCopper = dungeon.costCopper + costCopper
+    dungeon.durabilityLost = dungeon.durabilityLost + durabilityLost
+    dungeon.durabilityEvents = dungeon.durabilityEvents + 1
+end
+
+--- Record a Death Tax event (called from Core.lua).
+---@param costCopper number
+function Stats:RecordDeathTax(costCopper)
+    session.deathTaxCopper = session.deathTaxCopper + costCopper
+    dungeon.deathTaxCopper = dungeon.deathTaxCopper + costCopper
+end
+
+--- Get current session stats.
+---@return table session Copy of session data
+function Stats:GetSession()
+    return {
+        costCopper = session.costCopper,
+        durabilityLost = session.durabilityLost,
+        durabilityEvents = session.durabilityEvents,
+        deathTaxCopper = session.deathTaxCopper,
+    }
+end
+
+--- Get current dungeon stats.
+---@return table dungeon Copy of dungeon data
+function Stats:GetDungeon()
+    return {
+        costCopper = dungeon.costCopper,
+        durabilityLost = dungeon.durabilityLost,
+        durabilityEvents = dungeon.durabilityEvents,
+        deathTaxCopper = dungeon.deathTaxCopper,
+        instanceName = dungeon.instanceName,
+        keystoneLevel = dungeon.keystoneLevel,
+        startTime = dungeon.startTime,
+    }
+end
+
+--- Reset current dungeon counter.
+function Stats:ResetDungeon()
+    dungeon.costCopper = 0
+    dungeon.durabilityLost = 0
+    dungeon.durabilityEvents = 0
+    dungeon.deathTaxCopper = 0
+    dungeon.instanceName = nil
+    dungeon.keystoneLevel = nil
+    dungeon.startTime = nil
+end
+
+--- Reset session counter.
+function Stats:ResetSession()
+    session.costCopper = 0
+    session.durabilityLost = 0
+    session.durabilityEvents = 0
+    session.deathTaxCopper = 0
+end
+
+--- Save current dungeon to history ring buffer.
+function Stats:FinalizeDungeon()
+    if dungeon.costCopper <= 0 and dungeon.deathTaxCopper <= 0 then
+        return -- Nothing to save
+    end
+
+    local charData = ShieldTax:GetCharData()
+    if not charData then return end
+
+    local entry = {
+        instanceName = dungeon.instanceName or "Unknown",
+        keystoneLevel = dungeon.keystoneLevel,
+        costCopper = dungeon.costCopper,
+        durabilityLost = dungeon.durabilityLost,
+        deathTaxCopper = dungeon.deathTaxCopper,
+        duration = dungeon.startTime and (GetServerTime() - dungeon.startTime) or 0,
+        timestamp = GetServerTime(),
+    }
+
+    -- Circular buffer insertion
+    local idx = charData.dungeonHistoryIndex or 1
+    charData.dungeonHistory[idx] = entry
+    charData.dungeonHistoryIndex = (idx % DUNGEON_HISTORY_CAP) + 1
+
+    -- Increment lifetime dungeon count
+    charData.lifetime.dungeonCount = charData.lifetime.dungeonCount + 1
+end
+
+--- Get dungeon history entries, most recent first.
+---@param count number|nil Max entries to return (default 5)
+---@return table entries
+function Stats:GetHistory(count)
+    count = count or 5
+    local charData = ShieldTax:GetCharData()
+    if not charData or not charData.dungeonHistory then return {} end
+
+    -- Collect all non-nil entries
+    local all = {}
+    for i = 1, DUNGEON_HISTORY_CAP do
+        if charData.dungeonHistory[i] then
+            table.insert(all, charData.dungeonHistory[i])
+        end
+    end
+
+    -- Sort by timestamp descending (most recent first)
+    table.sort(all, function(a, b) return (a.timestamp or 0) > (b.timestamp or 0) end)
+
+    -- Return requested count
+    local result = {}
+    for i = 1, math.min(count, #all) do
+        result[i] = all[i]
+    end
+    return result
+end
+
+function Stats:OnEnterWorld()
+    local inInstance, instanceType = IsInInstance()
+    if inInstance and (instanceType == "party" or instanceType == "raid") then
+        -- Entered a dungeon/raid — finalize previous and start new
+        if dungeon.startTime then
+            self:FinalizeDungeon()
+        end
+        self:ResetDungeon()
+
+        local name = select(1, GetInstanceInfo())
+        dungeon.instanceName = name
+        dungeon.startTime = GetServerTime()
+    elseif dungeon.startTime and not inInstance then
+        -- Left instance — finalize
+        self:FinalizeDungeon()
+        self:ResetDungeon()
+    end
+end
+
+function Stats:OnZoneChanged()
+    -- Fallback dungeon detection
+    self:OnEnterWorld()
+end
+
+function Stats:OnKeystoneStart()
+    -- M+ start — reset dungeon counter with keystone info
+    if dungeon.startTime then
+        self:FinalizeDungeon()
+    end
+    self:ResetDungeon()
+
+    local name = select(1, GetInstanceInfo())
+    dungeon.instanceName = name
+    dungeon.startTime = GetServerTime()
+    -- keystoneLevel would be set via C_ChallengeMode if available
+    if C_ChallengeMode and C_ChallengeMode.GetActiveKeystoneInfo then
+        dungeon.keystoneLevel = select(1, C_ChallengeMode.GetActiveKeystoneInfo())
+    end
+end
+
+function Stats:OnKeystoneCompleted()
+    -- M+ completed — finalize and optionally auto-report
+    self:FinalizeDungeon()
+    local cost = dungeon.costCopper
+    local deathCost = dungeon.deathTaxCopper
+    if cost > 0 or deathCost > 0 then
+        local msg = "Dungeon Shield Tax: " ..
+            ShieldTax.CostCalculator:FormatGold(cost) ..
+            " (" .. dungeon.durabilityLost .. " durability lost)"
+        if deathCost > 0 then
+            msg = msg .. ". Death Tax: " .. ShieldTax.CostCalculator:FormatGold(deathCost)
+        end
+        ShieldTax:Print(msg)
+    end
+    self:ResetDungeon()
+end

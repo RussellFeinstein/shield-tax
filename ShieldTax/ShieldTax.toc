@@ -2,7 +2,7 @@
 ## Title: ShieldTax
 ## Notes: Tracks the hidden gold cost of Shield Block. Cha-ching!
 ## Author: RussellFeinstein
-## Version: 0.1.0
+## Version: 0.2.1
 ## SavedVariables: ShieldTaxDB
 ## IconTexture: Interface\Icons\INV_Shield_04
 ## X-Category: Combat
@@ -14,3 +14,6 @@ embeds.xml
 Core.lua
 CostCalculator.lua
 Tracker.lua
+SoundManager.lua
+Stats.lua
+Display.lua
