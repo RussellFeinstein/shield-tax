@@ -8,6 +8,7 @@ local frame
 local contentText
 local lifetimeText
 local statusText
+local titleText
 local shieldIcon
 local isLocked = true
 
@@ -142,21 +143,45 @@ function Display:Update()
         local contentLabels = { mythicplus="M+", raid="Raid", dungeon="Dungeon", openworld="Open World", other="Other" }
         local contentLabel = contentLabels[contentType] or contentType
 
-        -- Show current content cost (dungeon cost in instances, content-type cost in open world)
+        -- Hide entire frame if current content type is disabled
+        local db = ShieldTax.db and ShieldTax.db.profile
+        local contentEnabled = not db or not db.contentToggles or db.contentToggles[contentType] ~= false
+
+        if not contentEnabled then
+            frame:Hide()
+            return
+        end
+
+        -- Show frame (in case it was hidden by a disabled content type)
+        if db and db.displayEnabled then
+            frame:Show()
+        end
+
         if inInstance and dg.startTime then
             contentText:SetText(contentLabel .. ": " .. calc:FormatGold(dg.costCopper))
+            contentText:SetTextColor(1, 1, 1)
         else
-            -- Show current content-type session cost from Stats
             local ss = stats:GetSession()
             local ctCost = ss.byContent[contentType] and ss.byContent[contentType].costCopper or 0
             contentText:SetText(contentLabel .. ": " .. calc:FormatGold(ctCost))
+            contentText:SetTextColor(1, 1, 1)
         end
         contentText:Show()
         lifetimeText:SetPoint("TOPLEFT", contentText, "BOTTOMLEFT", 0, -2)
 
+        -- Calculate filtered lifetime total (only enabled content types)
         local charData = ShieldTax:GetCharData()
         if charData then
-            lifetimeText:SetText("Lifetime Total: " .. calc:FormatGold(charData.lifetime.totalCostCopper))
+            local lt = charData.lifetime
+            local filteredTotal = 0
+            local byContent = lt.byContent or {}
+            for key, ct in pairs(byContent) do
+                local enabled = not db or not db.contentToggles or db.contentToggles[key] ~= false
+                if enabled and ct.costCopper then
+                    filteredTotal = filteredTotal + ct.costCopper
+                end
+            end
+            lifetimeText:SetText("Lifetime Total: " .. calc:FormatGold(filteredTotal))
         end
 
         -- Resize frame to fit content
@@ -164,7 +189,6 @@ function Display:Update()
             contentText:IsShown() and contentText:GetStringWidth() or 0,
             lifetimeText:GetStringWidth()
         )
-        -- icon width + gap + text + padding
         local iconWidth = shieldIcon:GetWidth()
         frame:SetWidth(iconWidth + 6 + textWidth + 24)
     end
@@ -243,14 +267,18 @@ function Display:ShowTooltip()
         GameTooltip:AddLine(" ")
         GameTooltip:AddLine("Lifetime Breakdown", 0.7, 0.7, 1)
 
+        local db = ShieldTax.db and ShieldTax.db.profile
         local byContent = lt.byContent
+        local filteredTotal = 0
         if byContent then
             local labels = { mythicplus="M+", raid="Raid", dungeon="Dungeon", openworld="Open World", other="Other" }
             local hasData = false
             for key, label in pairs(labels) do
                 local ct = byContent[key]
-                if ct and ct.costCopper > 0 then
+                local enabled = not db or not db.contentToggles or db.contentToggles[key] ~= false
+                if ct and ct.costCopper > 0 and enabled then
                     GameTooltip:AddDoubleLine("  " .. label .. ":", calc:FormatGold(ct.costCopper), 1, 1, 1, 1, 1, 1)
+                    filteredTotal = filteredTotal + ct.costCopper
                     hasData = true
                 end
             end
@@ -264,7 +292,7 @@ function Display:ShowTooltip()
         end
 
         GameTooltip:AddLine(" ")
-        GameTooltip:AddDoubleLine("Lifetime Total:", calc:FormatGold(lt.totalCostCopper), 1, 0.82, 0, 1, 1, 1)
+        GameTooltip:AddDoubleLine("Lifetime Total:", calc:FormatGold(filteredTotal), 1, 0.82, 0, 1, 1, 1)
 
         -- Shield durability
         if tracker then

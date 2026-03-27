@@ -189,12 +189,12 @@ function Tracker:OnDurabilityChanged()
             -- Attribute to death, not combat
             local costCopper = ShieldTax.CostCalculator:GetCostPerPoint(shieldItemLink) * durabilityLost
             ShieldTax:OnDeathTaxEvent(costCopper, contentType)
-        elseif inCombat and self:IsContentEnabled(contentType) then
-            -- Shield Tax! Durability lost during combat in enabled content
+        elseif inCombat then
+            -- Shield Tax! Always track, display toggles are filters not blockers
             local costCopper = ShieldTax.CostCalculator:GetCostPerPoint(shieldItemLink) * durabilityLost
             ShieldTax:OnShieldTaxEvent(costCopper, durabilityLost, contentType)
         end
-        -- Out-of-combat, non-death, or disabled-content durability loss is ignored
+        -- Out-of-combat, non-death durability loss is ignored
     end
 
     -- Update snapshot

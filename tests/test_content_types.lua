@@ -80,7 +80,7 @@ describe("Content Types", function()
             assert.is_true(charData.lifetime.totalCostCopper > 0)
         end)
 
-        it("skips tracking when content type is disabled", function()
+        it("still tracks data when content type is disabled (toggles are display filters)", function()
             addon.db.profile.contentToggles.openworld = false
             Mock.inInstance = false
             Mock.instanceType = nil
@@ -89,24 +89,10 @@ describe("Content Types", function()
             Mock.durability[17] = { 99, 120 }
             tracker:OnDurabilityChanged()
 
-            local charData = addon:GetCharData()
-            assert.are.equal(0, charData.lifetime.totalCostCopper)
-        end)
-
-        it("still tracks other enabled content when one is disabled", function()
-            addon.db.profile.contentToggles.openworld = false
-
-            -- In M+ (enabled)
-            Mock.inInstance = true
-            Mock.instanceType = "party"
-            Mock.keystoneLevel = 15
-
-            tracker:OnCombatStart()
-            Mock.durability[17] = { 99, 120 }
-            tracker:OnDurabilityChanged()
-
+            -- Data IS recorded even when display is disabled
             local charData = addon:GetCharData()
             assert.is_true(charData.lifetime.totalCostCopper > 0)
+            assert.is_true(charData.lifetime.byContent.openworld.costCopper > 0)
         end)
     end)
 
