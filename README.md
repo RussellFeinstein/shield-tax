@@ -10,34 +10,18 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 
 - **Real-time shield durability tracking** during combat
 - **Gold cost estimation** based on item level and quality
-- **Sound effects** when your shield loses durability (configurable: coin jingle, money bag, auction, level up, or mute)
+- **Sound effects** when your shield loses durability (coin jingle, money bag, auction, level up, or mute)
+- **On-screen display** with Shield Tax title, current content cost, and lifetime total
+- **Content-type tracking** — see your cost breakdown by M+, Raid, Dungeon, and Open World
+- **Content display filters** — toggle which content types show on the frame and count toward the displayed total (data always records)
 - **Death Tax** tracked separately — deaths don't inflate your Shield Block cost
+- **Dungeon auto-detection** with per-dungeon history (last 50)
+- **Chat reporting** — share your Shield Tax with humorous randomized messages
+- **Milestone announcements** at real gold sink thresholds (Master Riding, Wooly Mammoth, Tundra Mammoth, Yak, Brutosaur)
+- **Minimap button** via LibDataBroker (left-click toggles display, right-click for help)
+- **Data persists** through `/reload` — resets on fresh login
 - **Warrior-only** — silently inactive on other classes
 - **12.0 (Midnight) compatible** — no CLEU dependency
-
-### Sound & Display (v0.5.0)
-
-- On-screen gold counter display (draggable frame with dungeon + session cost)
-- Configurable sound effects: coin jingle, cash register, coin drop, money bag, or mute
-- Sound throttle prevents spam on large pulls
-- Session / dungeon / lifetime statistics with Death Tax tracked separately
-- Dungeon auto-detection (M+ keystones and regular dungeons/raids)
-- Dungeon history (last 50, ring buffer)
-
-### Content-Type Tracking (v0.5.0)
-
-- Track Shield Tax by content type: M+, Raid, Dungeon, Open World, Other
-- `/st stats` — view cost breakdown by content type
-- `/st content` — toggle tracking per content type (e.g., disable open world)
-- Lifetime, session, and dungeon history all record content type
-- Display tooltip shows per-content breakdown
-
-### Chat & Social (v0.5.0)
-
-- `/st report` — share your Shield Tax in party/guild/say chat with randomized humorous messages
-- `/st history` — view your last 5 dungeon Shield Tax costs
-- Minimap button via LibDataBroker (left-click toggles display, right-click for help)
-- Milestone announcements at real gold sink thresholds: Master Riding (5K), Wooly Mammoth (10K), Tundra Mammoth (20K), Grand Expedition Yak (120K), Brutosaur (5M)
 
 ### Future (v2.0.0 — Tank Tax)
 
@@ -47,7 +31,7 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 
 ## Installation
 
-1. Download from [CurseForge](https://www.curseforge.com/wow/addons/shieldtax) (coming soon) or clone this repo
+1. Download from [CurseForge](https://www.curseforge.com/wow/addons/shieldtax) or clone this repo
 2. Copy the `ShieldTax/` folder to your `World of Warcraft/_retail_/Interface/AddOns/` directory
 3. Log in on a Warrior character — the addon activates automatically
 
@@ -58,12 +42,12 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 | `/st` | Toggle display frame |
 | `/st sound [coin\|money_open\|auction\|levelup\|none]` | Set sound effect |
 | `/st sound test` | Play current sound |
-| `/st lifetime` | Print lifetime stats |
+| `/st lifetime` | Lifetime stats with content breakdown |
 | `/st content [type]` | View/toggle content-type display filter |
 | `/st stats` | Shield Tax by content type |
 | `/st report [party\|guild\|say]` | Share Shield Tax in chat |
 | `/st history` | Last 5 dungeon costs |
-| `/st reset` | Reset dungeon counter |
+| `/st reset` | Reset current content counter |
 | `/st reset all` | Reset ALL data |
 | `/st move` / `/st lock` | Unlock/lock display position |
 | `/st minimap` | Toggle minimap icon |
@@ -74,7 +58,7 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 
 ShieldTax monitors your shield's durability via the `UPDATE_INVENTORY_DURABILITY` event. When durability decreases while you're in combat (and you haven't just died), it calculates the repair cost using your shield's item level and quality, plays a sound, and adds the cost to your running tally.
 
-**Cost formula:** `(effectiveItemLevel - 32.5) × qualityMultiplier` silver per durability point
+**Cost formula:** `(effectiveItemLevel - 32.5) x qualityMultiplier` silver per durability point
 
 | Quality | Multiplier |
 |---------|-----------|
@@ -113,15 +97,15 @@ shield-tax/
 ├── ShieldTax/           # WoW addon (copy this to Interface/AddOns/)
 │   ├── ShieldTax.toc    # Addon manifest
 │   ├── Core.lua         # Init, class guard, slash commands
-│   ├── Tracker.lua      # Durability monitoring + combat state
+│   ├── Tracker.lua      # Durability monitoring + combat state + content detection
 │   ├── CostCalculator.lua  # Gold cost formula
 │   ├── SoundManager.lua # Sound effects + throttle
-│   ├── Stats.lua        # Session/dungeon/lifetime stats
+│   ├── Stats.lua        # Session/dungeon/lifetime stats (persisted)
 │   ├── Display.lua      # On-screen gold counter frame
 │   ├── ChatReporter.lua # Chat reports + milestones
 │   └── MinimapButton.lua # LibDataBroker minimap icon
 ├── tests/               # busted tests (not included in addon)
-│   ├── wow_api_mock.lua # WoW API mock layer
+│   ├── wow_api_mock.lua
 │   ├── test_tracker.lua
 │   ├── test_cost_calculator.lua
 │   ├── test_sound_manager.lua
@@ -141,4 +125,4 @@ shield-tax/
 
 ## Version
 
-0.5.0
+0.6.0
