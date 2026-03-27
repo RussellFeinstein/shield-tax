@@ -13,6 +13,8 @@ local function loadAddon()
     dofile("ShieldTax/SoundManager.lua")
     dofile("ShieldTax/Stats.lua")
     dofile("ShieldTax/Display.lua")
+    dofile("ShieldTax/ChatReporter.lua")
+    dofile("ShieldTax/MinimapButton.lua")
 end
 
 describe("Stats", function()

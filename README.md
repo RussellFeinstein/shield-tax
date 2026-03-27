@@ -15,7 +15,7 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 - **Warrior-only** — silently inactive on other classes
 - **12.0 (Midnight) compatible** — no CLEU dependency
 
-### Sound & Display (v0.2.0)
+### Sound & Display (v0.3.0)
 
 - On-screen gold counter display (draggable frame with dungeon + session cost)
 - Configurable sound effects: coin jingle, cash register, coin drop, money bag, or mute
@@ -24,11 +24,12 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 - Dungeon auto-detection (M+ keystones and regular dungeons/raids)
 - Dungeon history (last 50, ring buffer)
 
-### Coming in v0.3.0
+### Chat & Social (v0.3.0)
 
-- `/st report` — share your Shield Tax in party/guild chat with humorous messages
-- Minimap button (LibDataBroker)
-- Milestone announcements at gold sink thresholds (Tundra Mammoth, Yak, Brutosaur)
+- `/st report` — share your Shield Tax in party/guild/say chat with randomized humorous messages
+- `/st history` — view your last 5 dungeon Shield Tax costs
+- Minimap button via LibDataBroker (left-click toggles display, right-click for help)
+- Milestone announcements at real gold sink thresholds: Master Riding (5K), Wooly Mammoth (10K), Tundra Mammoth (20K), Grand Expedition Yak (120K), Brutosaur (5M)
 
 ### Future (v2.0.0 — Tank Tax)
 
@@ -53,6 +54,8 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 | `/st lifetime` | Print lifetime stats |
 | `/st reset` | Reset dungeon counter |
 | `/st reset session` | Reset session counter |
+| `/st report [party\|guild\|say]` | Share Shield Tax in chat |
+| `/st history` | Last 5 dungeon costs |
 | `/st reset all` | Reset ALL data |
 | `/st move` / `/st lock` | Unlock/lock display position |
 | `/st minimap` | Toggle minimap icon |
@@ -106,14 +109,18 @@ shield-tax/
 │   ├── CostCalculator.lua  # Gold cost formula
 │   ├── SoundManager.lua # Sound effects + throttle
 │   ├── Stats.lua        # Session/dungeon/lifetime stats
-│   └── Display.lua      # On-screen gold counter frame
+│   ├── Display.lua      # On-screen gold counter frame
+│   ├── ChatReporter.lua # Chat reports + milestones
+│   └── MinimapButton.lua # LibDataBroker minimap icon
 ├── tests/               # busted tests (not included in addon)
 │   ├── wow_api_mock.lua # WoW API mock layer
 │   ├── test_tracker.lua
 │   ├── test_cost_calculator.lua
 │   ├── test_sound_manager.lua
 │   ├── test_stats.lua
-│   └── test_display.lua
+│   ├── test_display.lua
+│   ├── test_core.lua
+│   └── test_chat_reporter.lua
 ├── pkgmeta.yaml         # CurseForge packager config
 ├── CHANGELOG.md
 └── README.md
@@ -125,4 +132,4 @@ shield-tax/
 
 ## Version
 
-0.2.0
+0.3.0

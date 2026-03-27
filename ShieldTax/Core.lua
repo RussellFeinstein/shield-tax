@@ -2,7 +2,7 @@
 local ShieldTax = LibStub("AceAddon-3.0"):NewAddon("ShieldTax", "AceEvent-3.0", "AceConsole-3.0")
 _G.ShieldTax = ShieldTax
 
-ShieldTax.VERSION = "0.2.1"
+ShieldTax.VERSION = "0.3.0"
 
 local DB_DEFAULTS = {
     global = {
@@ -72,6 +72,9 @@ function ShieldTax:OnEnable()
     if self.Display then
         self.Display:Init()
     end
+    if self.MinimapButton then
+        self.MinimapButton:Init()
+    end
 end
 
 function ShieldTax:OnDisable()
@@ -112,12 +115,12 @@ function ShieldTax:HandleSlashCommand(input)
         self:PrintSessionStats()
     elseif cmd == "lifetime" then
         self:PrintLifetimeStats()
+    elseif cmd == "report" then
+        if self.ChatReporter then self.ChatReporter:Report(arg1) end
+    elseif cmd == "history" then
+        if self.ChatReporter then self.ChatReporter:PrintHistory() end
     elseif cmd == "minimap" then
-        local db = self.db and self.db.profile
-        if db then
-            db.minimapIcon = not db.minimapIcon
-            self:Print("Minimap icon " .. (db.minimapIcon and "enabled" or "disabled") .. ".")
-        end
+        if self.MinimapButton then self.MinimapButton:Toggle() end
     else
         self:Print("Unknown command: " .. cmd .. ". Type /st help for commands.")
     end
@@ -211,6 +214,8 @@ function ShieldTax:PrintHelp()
     self:Print("  /st reset — Reset dungeon counter")
     self:Print("  /st reset session — Reset session")
     self:Print("  /st reset all — Reset everything")
+    self:Print("  /st report [party|guild|say] — Report to chat")
+    self:Print("  /st history — Last 5 dungeons")
     self:Print("  /st move / lock — Unlock/lock display")
     self:Print("  /st minimap — Toggle minimap icon")
     self:Print("  /st version — Show version")
@@ -227,6 +232,7 @@ function ShieldTax:OnShieldTaxEvent(costCopper, durabilityLost)
 
     -- Update lifetime stats
     local lifetime = charData.lifetime
+    local oldTotal = lifetime.totalCostCopper
     lifetime.totalCostCopper = lifetime.totalCostCopper + costCopper
     lifetime.totalDurabilityLost = lifetime.totalDurabilityLost + durabilityLost
     lifetime.totalDurabilityEvents = lifetime.totalDurabilityEvents + 1
@@ -248,6 +254,16 @@ function ShieldTax:OnShieldTaxEvent(costCopper, durabilityLost)
     -- Update display
     if self.Display then
         self.Display:Update()
+    end
+
+    -- Update minimap button text
+    if self.MinimapButton then
+        self.MinimapButton:Update()
+    end
+
+    -- Check milestones
+    if self.ChatReporter then
+        self.ChatReporter:CheckMilestones(oldTotal, lifetime.totalCostCopper)
     end
 end
 

@@ -149,7 +149,13 @@ function _G.C_ChallengeMode.GetActiveKeystoneInfo()
 end
 Mock.keystoneLevel = nil
 
-function _G.SendChatMessage() end
+Mock.chatMessages = {}
+function _G.SendChatMessage(msg, chatType, language, target)
+    table.insert(Mock.chatMessages, { msg = msg, channel = chatType })
+end
+
+-- math.random seeding for reproducible tests
+math.randomseed(12345)
 
 ----------------------------------------------------------------------
 -- Frame Mock
@@ -353,6 +359,29 @@ function AceDB:New(savedVarName, defaults)
 end
 
 ----------------------------------------------------------------------
+-- LibDataBroker-1.1 Mock
+----------------------------------------------------------------------
+
+local LibDataBroker = {}
+libs["LibDataBroker-1.1"] = LibDataBroker
+
+function LibDataBroker:NewDataObject(name, obj)
+    return obj or {}
+end
+
+----------------------------------------------------------------------
+-- LibDBIcon-1.0 Mock
+----------------------------------------------------------------------
+
+local LibDBIcon = {}
+libs["LibDBIcon-1.0"] = LibDBIcon
+
+function LibDBIcon:Register() end
+function LibDBIcon:Show() end
+function LibDBIcon:Hide() end
+function LibDBIcon:IsRegistered() return false end
+
+----------------------------------------------------------------------
 -- AceEvent-3.0 Mock (mixed into addons via NewAddon)
 ----------------------------------------------------------------------
 -- Already handled by AceAddon RegisterEvent/UnregisterEvent
@@ -393,6 +422,7 @@ function Mock.reset()
     Mock.inCombatLockdown = false
     Mock.soundsPlayed = {}
     Mock.soundFilesPlayed = {}
+    Mock.chatMessages = {}
     Mock.registeredEvents = {}
     Mock.savedVars = {}
 

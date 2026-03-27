@@ -5,6 +5,37 @@ All notable changes to ShieldTax will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] — 2026-03-26
+
+**Milestone M3: Chat Reporting, LDB, and Polish**
+
+### Added
+- Chat reporting via `/st report [party|guild|say|raid]` with 7 humorous randomized templates
+- Dungeon history via `/st history` (last 5 dungeons with costs and Death Tax)
+- Milestone announcements at real WoW gold sink thresholds (100g, 5K Master Riding, 10K Wooly Mammoth, 20K Tundra Mammoth, 120K Yak, 5M Brutosaur)
+- LibDataBroker minimap button via LibDBIcon (left-click toggles display, right-click shows help)
+- Minimap tooltip with dungeon/session/lifetime stats and shield durability %
+- `/st minimap` now actually toggles the minimap icon (previously was a no-op)
+- Test coverage for ChatReporter (report channels, template substitution, message variety, milestones, history)
+
+## [0.2.1] — 2026-03-26
+
+### Fixed
+- Mock `IsInInstance()` now returns both values (fixes dungeon detection testing)
+- Mock `PlaySound` captures channel argument (verifies correct sound channel)
+- Mock `FireEvent` passes event name as first arg (matches real AceEvent-3.0)
+- Keystone completion message now includes Death Tax
+- Zero/negative-cost events filtered out (no phantom sounds)
+- Post-resurrection durability re-snapshot prevents phantom costs
+- Display frame creation deferred during combat lockdown
+- Display updates after all reset commands
+- `C_Item.GetItemInfo` guarded for potential 12.0 removal
+- Help text includes all sound options
+
+### Added
+- `test_core.lua` covering slash commands, resets, event callbacks
+- Dungeon detection event path tests
+
 ## [0.2.0] — 2026-03-26
 
 **Milestone M2: Sound, Display, and Statistics**
