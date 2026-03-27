@@ -109,6 +109,11 @@ function _G.InCombatLockdown()
     return Mock.inCombatLockdown
 end
 
+Mock.isDead = false
+function _G.UnitIsDeadOrGhost(unit)
+    return Mock.isDead
+end
+
 function _G.PlaySound(soundKitID, channel)
     table.insert(Mock.soundsPlayed, { id = soundKitID, channel = channel })
 end
@@ -420,6 +425,7 @@ function Mock.reset()
     Mock.instanceType = nil
     Mock.keystoneLevel = nil
     Mock.inCombatLockdown = false
+    Mock.isDead = false
     Mock.soundsPlayed = {}
     Mock.soundFilesPlayed = {}
     Mock.chatMessages = {}

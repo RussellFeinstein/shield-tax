@@ -51,8 +51,8 @@ describe("Core", function()
         end)
 
         it("handles /st sound with valid key", function()
-            addon:HandleSlashCommand("sound register")
-            assert.are.equal("register", addon.db.profile.soundEffect)
+            addon:HandleSlashCommand("sound auction")
+            assert.are.equal("auction", addon.db.profile.soundEffect)
         end)
 
         it("handles /st sound with invalid key", function()

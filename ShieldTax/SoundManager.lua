@@ -7,13 +7,15 @@ ShieldTax.SoundManager = SoundManager
 -- Last time a sound was played (monotonic via GetTime)
 local lastSoundTime = 0
 
--- Sound definitions: key -> { type = "kit"|"file", id/path }
+-- Sound definitions: key -> { type = "kit"|"file", id/path, label }
+-- Only built-in WoW sounds are available by default.
+-- Custom .ogg sounds (register, coins) will be added when sound files are sourced.
 local SOUND_DEFS = {
-    coin       = { type = "kit", id = 120 },   -- SOUNDKIT.LOOT_WINDOW_COIN_SOUND
-    money_open = { type = "kit", id = 891 },   -- SOUNDKIT.MONEY_FRAME_OPEN
-    register   = { type = "file", path = "Interface\\AddOns\\ShieldTax\\Sounds\\register.ogg" },
-    coins      = { type = "file", path = "Interface\\AddOns\\ShieldTax\\Sounds\\coins.ogg" },
-    none       = { type = "none" },
+    coin       = { type = "kit", id = 120, label = "Coin jingle" },          -- SOUNDKIT.LOOT_WINDOW_COIN_SOUND
+    money_open = { type = "kit", id = 891, label = "Money bag" },            -- SOUNDKIT.MONEY_FRAME_OPEN
+    auction    = { type = "kit", id = 5274, label = "Auction sold" },        -- AuctionWindowClose
+    levelup    = { type = "kit", id = 888, label = "Level up" },             -- LEVELUPSOUND
+    none       = { type = "none", label = "Muted" },
 }
 
 --- Play the configured sound effect, respecting throttle.
@@ -98,6 +100,14 @@ function SoundManager:GetEffectKeys()
     end
     table.sort(keys)
     return keys
+end
+
+--- Get label for a sound effect key.
+---@param key string
+---@return string label
+function SoundManager:GetEffectLabel(key)
+    local def = SOUND_DEFS[key]
+    return def and def.label or key
 end
 
 --- Reset the throttle timer (for testing).

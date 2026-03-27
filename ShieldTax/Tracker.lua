@@ -153,6 +153,11 @@ function Tracker:OnEquipmentChanged(slot)
 
     self:UpdateShieldInfo()
     self:SnapshotDurability()
+
+    -- Refresh display to show/hide "No shield equipped" state
+    if ShieldTax.Display then
+        ShieldTax.Display:Update()
+    end
 end
 
 function Tracker:OnDurabilityChanged()
@@ -174,8 +179,13 @@ function Tracker:OnDurabilityChanged()
     if durabilityLost > 0 then
         local contentType = self:GetContentType()
 
-        -- Check death guard: ignore durability loss within DEATH_GUARD_DURATION of death
-        if recentDeath and (GetTime() - deathTime) < DEATH_GUARD_DURATION then
+        -- Death guard: check both the flag AND UnitIsDeadOrGhost as a fallback.
+        -- UPDATE_INVENTORY_DURABILITY can fire before PLAYER_DEAD in the same frame,
+        -- so recentDeath may not be set yet when durability loss from death arrives.
+        local isDead = (recentDeath and (GetTime() - deathTime) < DEATH_GUARD_DURATION)
+            or UnitIsDeadOrGhost("player")
+
+        if isDead then
             -- Attribute to death, not combat
             local costCopper = ShieldTax.CostCalculator:GetCostPerPoint(shieldItemLink) * durabilityLost
             ShieldTax:OnDeathTaxEvent(costCopper, contentType)

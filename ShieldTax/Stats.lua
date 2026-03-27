@@ -178,28 +178,48 @@ function Stats:GetHistory(count)
     return result
 end
 
+-- Track current instance to avoid resetting on zone changes within the same instance
+-- (e.g., dying and going to graveyard, or moving between dungeon wings)
+local currentInstanceName = nil
+
 function Stats:OnEnterWorld()
     local inInstance, instanceType = IsInInstance()
     if inInstance and (instanceType == "party" or instanceType == "raid") then
-        -- Entered a dungeon/raid — finalize previous and start new
-        if dungeon.startTime then
-            self:FinalizeDungeon()
-        end
-        self:ResetDungeon()
-
         local name = select(1, GetInstanceInfo())
-        dungeon.instanceName = name
-        dungeon.startTime = GetServerTime()
-    elseif dungeon.startTime and not inInstance then
-        -- Left instance — finalize
-        self:FinalizeDungeon()
-        self:ResetDungeon()
+
+        -- Only reset if entering a DIFFERENT instance (not same dungeon after death/zone change)
+        if name ~= currentInstanceName then
+            if dungeon.startTime then
+                self:FinalizeDungeon()
+            end
+            self:ResetDungeon()
+
+            currentInstanceName = name
+            dungeon.instanceName = name
+            dungeon.startTime = GetServerTime()
+        end
+    elseif not inInstance then
+        if dungeon.startTime then
+            -- Actually left the instance
+            self:FinalizeDungeon()
+            self:ResetDungeon()
+        end
+        currentInstanceName = nil
     end
 end
 
 function Stats:OnZoneChanged()
-    -- Fallback dungeon detection
-    self:OnEnterWorld()
+    -- Only act on zone changes that actually change instance context
+    -- (ignore graveyard transitions, sub-zone changes within same instance)
+    local inInstance, instanceType = IsInInstance()
+    if not inInstance and currentInstanceName then
+        -- Left instance via zone change
+        self:OnEnterWorld()
+    elseif inInstance and not currentInstanceName then
+        -- Entered instance via zone change
+        self:OnEnterWorld()
+    end
+    -- If in same instance or same non-instance, do nothing
 end
 
 function Stats:OnKeystoneStart()

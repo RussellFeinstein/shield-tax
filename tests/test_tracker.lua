@@ -210,6 +210,23 @@ describe("Tracker", function()
             assert.is_true(charData.lifetime.deathTaxCopper > 0)
         end)
 
+        it("catches death even when durability fires BEFORE PLAYER_DEAD", function()
+            addon.Tracker:OnCombatStart()
+
+            -- Durability event fires FIRST (race condition in WoW event system)
+            -- PLAYER_DEAD has NOT fired yet, so recentDeath is false
+            -- But UnitIsDeadOrGhost returns true
+            Mock.gameTime = 200
+            Mock.isDead = true
+            Mock.durability[17] = { 90, 120 }
+            addon.Tracker:OnDurabilityChanged()
+
+            -- Should be Death Tax, not Shield Tax
+            local charData = addon:GetCharData()
+            assert.are.equal(0, charData.lifetime.totalCostCopper)
+            assert.is_true(charData.lifetime.deathTaxCopper > 0)
+        end)
+
         it("clears death guard on PLAYER_ALIVE", function()
             addon.Tracker:OnPlayerDead()
             assert.is_true(addon.Tracker:IsRecentDeath())

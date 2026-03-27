@@ -68,13 +68,12 @@ describe("SoundManager", function()
             assert.are.equal(0, #Mock.soundFilesPlayed)
         end)
 
-        it("uses PlaySoundFile for custom sounds", function()
-            addon.db.profile.soundEffect = "register"
+        it("uses PlaySound for auction sound", function()
+            addon.db.profile.soundEffect = "auction"
             Mock.gameTime = 100
             sm:Play()
-            assert.are.equal(0, #Mock.soundsPlayed)
-            assert.are.equal(1, #Mock.soundFilesPlayed)
-            assert.truthy(Mock.soundFilesPlayed[1].path:find("register%.ogg"))
+            assert.are.equal(1, #Mock.soundsPlayed)
+            assert.are.equal(5274, Mock.soundsPlayed[1].id)
         end)
 
         it("uses PlaySound for kit sounds with correct channel", function()
@@ -90,20 +89,21 @@ describe("SoundManager", function()
     describe("SetEffect", function()
         it("accepts valid keys", function()
             assert.is_true(sm:SetEffect("coin"))
-            assert.is_true(sm:SetEffect("register"))
-            assert.is_true(sm:SetEffect("coins"))
-            assert.is_true(sm:SetEffect("none"))
             assert.is_true(sm:SetEffect("money_open"))
+            assert.is_true(sm:SetEffect("auction"))
+            assert.is_true(sm:SetEffect("levelup"))
+            assert.is_true(sm:SetEffect("none"))
         end)
 
         it("rejects invalid keys", function()
             assert.is_false(sm:SetEffect("invalid"))
             assert.is_false(sm:SetEffect(""))
+            assert.is_false(sm:SetEffect("register"))  -- removed, no .ogg file
         end)
 
         it("persists to profile", function()
-            sm:SetEffect("register")
-            assert.are.equal("register", addon.db.profile.soundEffect)
+            sm:SetEffect("auction")
+            assert.are.equal("auction", addon.db.profile.soundEffect)
         end)
     end)
 
@@ -116,7 +116,7 @@ describe("SoundManager", function()
             for _, k in ipairs(keys) do keySet[k] = true end
             assert.is_true(keySet["coin"])
             assert.is_true(keySet["none"])
-            assert.is_true(keySet["register"])
+            assert.is_true(keySet["auction"])
         end)
     end)
 end)

@@ -206,7 +206,7 @@ describe("Stats", function()
             assert.are.equal("Ara-Kara", dg.instanceName)
         end)
 
-        it("does not double-finalize on zone change within instance", function()
+        it("does not reset on zone change within same instance (e.g., death)", function()
             Mock.inInstance = true
             Mock.instanceType = "party"
             Mock.instanceInfo = { "The Stonevault", "party", 1, "Mythic", 0, 0, false, 1, 5 }
@@ -215,15 +215,17 @@ describe("Stats", function()
 
             stats:RecordShieldTax(5000, 2)
 
-            -- Zone change within same instance
+            -- Zone change within same instance (death, graveyard, etc.)
             stats:OnZoneChanged()
 
-            -- Should still be in the same dungeon (not finalized + restarted)
-            -- OnZoneChanged calls OnEnterWorld, which sees we're in instance
-            -- with a startTime, so it finalizes and starts a new one
-            -- This is acceptable behavior — the old dungeon is saved
+            -- Should still have the same dungeon data — NOT reset
+            local dg = stats:GetDungeon()
+            assert.are.equal(5000, dg.costCopper)
+            assert.are.equal(2, dg.durabilityLost)
+
+            -- No dungeon finalized (still in progress)
             local charData = addon:GetCharData()
-            assert.is_true(charData.lifetime.dungeonCount >= 1)
+            assert.are.equal(0, charData.lifetime.dungeonCount)
         end)
     end)
 end)

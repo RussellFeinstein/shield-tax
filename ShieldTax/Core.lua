@@ -149,8 +149,13 @@ function ShieldTax:HandleSoundCommand(arg)
     if not self.SoundManager then return end
 
     if not arg or arg == "" then
-        self:Print("Current sound: " .. self.SoundManager:GetEffect())
-        self:Print("Options: " .. table.concat(self.SoundManager:GetEffectKeys(), ", "))
+        local current = self.SoundManager:GetEffect()
+        self:Print("Current sound: " .. current .. " (" .. self.SoundManager:GetEffectLabel(current) .. ")")
+        self:Print("Options:")
+        for _, key in ipairs(self.SoundManager:GetEffectKeys()) do
+            local marker = key == current and " *" or ""
+            self:Print("  " .. key .. " — " .. self.SoundManager:GetEffectLabel(key) .. marker)
+        end
         return
     end
 
@@ -158,7 +163,7 @@ function ShieldTax:HandleSoundCommand(arg)
     if arg == "test" then
         self.SoundManager:PlayTest()
     elseif self.SoundManager:SetEffect(arg) then
-        self:Print("Sound set to: " .. arg)
+        self:Print("Sound set to: " .. arg .. " (" .. self.SoundManager:GetEffectLabel(arg) .. ")")
     else
         self:Print("Unknown sound: " .. arg)
         self:Print("Options: " .. table.concat(self.SoundManager:GetEffectKeys(), ", "))
@@ -187,6 +192,13 @@ function ShieldTax:HandleResetCommand(arg)
             charData.lifetime.deathTaxCopper = 0
             charData.lifetime.dungeonCount = 0
             charData.lifetime.firstSeen = nil
+            charData.lifetime.byContent = {
+                mythicplus = { costCopper = 0, durabilityLost = 0, events = 0 },
+                raid       = { costCopper = 0, durabilityLost = 0, events = 0 },
+                dungeon    = { costCopper = 0, durabilityLost = 0, events = 0 },
+                openworld  = { costCopper = 0, durabilityLost = 0, events = 0 },
+                other      = { costCopper = 0, durabilityLost = 0, events = 0 },
+            }
             charData.dungeonHistory = {}
             charData.dungeonHistoryIndex = 1
         end
@@ -244,7 +256,7 @@ end
 function ShieldTax:PrintHelp()
     self:Print("ShieldTax v" .. self.VERSION .. " Commands:")
     self:Print("  /st — Toggle display frame")
-    self:Print("  /st sound [coin|money_open|register|coins|none] — Set sound")
+    self:Print("  /st sound [coin|money_open|auction|levelup|none] — Set sound")
     self:Print("  /st sound test — Play current sound")
     self:Print("  /st session — Session stats")
     self:Print("  /st lifetime — Lifetime stats")
