@@ -1,4 +1,5 @@
 package-as: ShieldTax
+manual-changelog: CHANGELOG.md
 
 externals:
   ShieldTax/Libs/LibStub:

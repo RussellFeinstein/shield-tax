@@ -31,9 +31,11 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 
 ## Installation
 
-1. Download from [CurseForge](https://www.curseforge.com/wow/addons/shieldtax) or clone this repo
+1. Download from [CurseForge](https://www.curseforge.com/wow/addons/shieldtax) or [GitHub Releases](https://github.com/RussellFeinstein/shield-tax/releases)
 2. Copy the `ShieldTax/` folder to your `World of Warcraft/_retail_/Interface/AddOns/` directory
 3. Log in on a Warrior character — the addon activates automatically
+
+Releases are automatically packaged and uploaded when a version tag is pushed.
 
 ## Commands
 
@@ -125,4 +127,4 @@ shield-tax/
 
 ## Version
 
-1.0.1
+1.0.2

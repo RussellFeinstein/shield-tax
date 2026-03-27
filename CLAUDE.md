@@ -45,3 +45,10 @@ WoW addon that tracks shield durability cost for Warriors. Built on Ace3 framewo
 - `pkgmeta.yaml` for CurseForge BigWigs packager
 - Ace3 libs are externals (fetched by packager, not committed)
 - `.gitignore` excludes `ShieldTax/Libs/`
+
+## CI/CD
+- GitHub Actions workflow: `.github/workflows/release.yml`
+- Triggers on tag push (`v*`)
+- Uses `BigWigsMods/packager@v2` to build and upload to CurseForge
+- Also creates a GitHub Release with the packaged zip
+- Requires `CF_API_KEY` secret in GitHub repo settings (CurseForge API token)
