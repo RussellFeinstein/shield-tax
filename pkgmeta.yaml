@@ -1,6 +1,9 @@
 package-as: ShieldTax
 manual-changelog: CHANGELOG.md
 
+move-folders:
+  ShieldTax/ShieldTax: ShieldTax
+
 externals:
   ShieldTax/Libs/LibStub:
     url: https://repos.wowace.com/wow/libstub/trunk

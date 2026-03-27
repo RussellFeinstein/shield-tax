@@ -5,6 +5,11 @@ All notable changes to ShieldTax will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] — 2026-03-27
+
+### Fixed
+- Add `move-folders` to `pkgmeta.yaml` so BigWigs packager finds the TOC in the `ShieldTax/` subdirectory
+
 ## [1.0.2] — 2026-03-27
 
 ### Added
