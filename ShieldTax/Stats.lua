@@ -9,8 +9,7 @@ local function newContentStats()
     return { costCopper = 0, durabilityLost = 0, events = 0 }
 end
 
--- Session data: local table, NOT saved — resets on logout and /reload
-local session = {
+local EMPTY_SESSION = {
     costCopper = 0,
     durabilityLost = 0,
     durabilityEvents = 0,
@@ -18,8 +17,24 @@ local session = {
     byContent = {},
 }
 
--- Current dungeon data: resets on instance entry or manual reset
-local dungeon = {
+--- Get (or create) the persisted session data from SavedVariables.
+--- Persists through /reload, resets on fresh login.
+local function getSession()
+    local charData = ShieldTax:GetCharData()
+    if not charData then return EMPTY_SESSION end
+    if not charData.currentSession then
+        charData.currentSession = {
+            costCopper = 0,
+            durabilityLost = 0,
+            durabilityEvents = 0,
+            deathTaxCopper = 0,
+            byContent = {},
+        }
+    end
+    return charData.currentSession
+end
+
+local EMPTY_DUNGEON = {
     costCopper = 0,
     durabilityLost = 0,
     durabilityEvents = 0,
@@ -30,11 +45,53 @@ local dungeon = {
     startTime = nil,
 }
 
+--- Get (or create) the persisted dungeon data from SavedVariables.
+--- Persists through /reload, resets on instance change.
+local function getDungeon()
+    local charData = ShieldTax:GetCharData()
+    if not charData then return EMPTY_DUNGEON end
+    if not charData.currentDungeon then
+        charData.currentDungeon = {
+            costCopper = 0,
+            durabilityLost = 0,
+            durabilityEvents = 0,
+            deathTaxCopper = 0,
+            contentType = nil,
+            instanceName = nil,
+            keystoneLevel = nil,
+            startTime = nil,
+        }
+    end
+    return charData.currentDungeon
+end
+
 local DUNGEON_HISTORY_CAP = 50
 
 function Stats:Init()
+    -- Restore currentInstanceName from persisted dungeon data (survives /reload)
+    local dungeon = getDungeon()
+    if dungeon.instanceName then
+        currentInstanceName = dungeon.instanceName
+    end
+
     -- Register dungeon detection events
-    ShieldTax:RegisterEvent("PLAYER_ENTERING_WORLD", function() Stats:OnEnterWorld() end)
+    -- PLAYER_ENTERING_WORLD passes (isInitialLogin, isReloadingUi)
+    ShieldTax:RegisterEvent("PLAYER_ENTERING_WORLD", function(event, isInitialLogin, isReloadingUi)
+        if isInitialLogin then
+            -- Fresh login — reset session and dungeon data
+            Stats:ResetSession()
+            Stats:ResetDungeon()
+            currentInstanceName = nil
+        end
+        if not isReloadingUi then
+            -- Only run zone detection on actual zone transitions, not /reload
+            Stats:OnEnterWorld()
+        end
+        -- Always refresh display
+        if ShieldTax.Display then
+            ShieldTax.Display:Update()
+        end
+    end)
     ShieldTax:RegisterEvent("ZONE_CHANGED_NEW_AREA", function() Stats:OnZoneChanged() end)
     ShieldTax:RegisterEvent("CHALLENGE_MODE_START", function() Stats:OnKeystoneStart() end)
     ShieldTax:RegisterEvent("CHALLENGE_MODE_COMPLETED", function() Stats:OnKeystoneCompleted() end)
@@ -46,6 +103,8 @@ end
 ---@param contentType string|nil Content type
 function Stats:RecordShieldTax(costCopper, durabilityLost, contentType)
     contentType = contentType or "other"
+    local session = getSession()
+    local dungeon = getDungeon()
 
     session.costCopper = session.costCopper + costCopper
     session.durabilityLost = session.durabilityLost + durabilityLost
@@ -70,6 +129,8 @@ end
 ---@param costCopper number
 ---@param contentType string|nil Content type
 function Stats:RecordDeathTax(costCopper, contentType)
+    local session = getSession()
+    local dungeon = getDungeon()
     session.deathTaxCopper = session.deathTaxCopper + costCopper
     dungeon.deathTaxCopper = dungeon.deathTaxCopper + costCopper
 end
@@ -77,6 +138,7 @@ end
 --- Get current session stats.
 ---@return table session Copy of session data
 function Stats:GetSession()
+    local session = getSession()
     return {
         costCopper = session.costCopper,
         durabilityLost = session.durabilityLost,
@@ -89,6 +151,7 @@ end
 --- Get current dungeon stats.
 ---@return table dungeon Copy of dungeon data
 function Stats:GetDungeon()
+    local dungeon = getDungeon()
     return {
         costCopper = dungeon.costCopper,
         durabilityLost = dungeon.durabilityLost,
@@ -103,27 +166,38 @@ end
 
 --- Reset current dungeon counter.
 function Stats:ResetDungeon()
-    dungeon.costCopper = 0
-    dungeon.durabilityLost = 0
-    dungeon.durabilityEvents = 0
-    dungeon.deathTaxCopper = 0
-    dungeon.contentType = nil
-    dungeon.instanceName = nil
-    dungeon.keystoneLevel = nil
-    dungeon.startTime = nil
+    local charData = ShieldTax:GetCharData()
+    if charData then
+        charData.currentDungeon = {
+            costCopper = 0,
+            durabilityLost = 0,
+            durabilityEvents = 0,
+            deathTaxCopper = 0,
+            contentType = nil,
+            instanceName = nil,
+            keystoneLevel = nil,
+            startTime = nil,
+        }
+    end
 end
 
 --- Reset session counter.
 function Stats:ResetSession()
-    session.costCopper = 0
-    session.durabilityLost = 0
-    session.durabilityEvents = 0
-    session.deathTaxCopper = 0
-    session.byContent = {}
+    local charData = ShieldTax:GetCharData()
+    if charData then
+        charData.currentSession = {
+            costCopper = 0,
+            durabilityLost = 0,
+            durabilityEvents = 0,
+            deathTaxCopper = 0,
+            byContent = {},
+        }
+    end
 end
 
 --- Save current dungeon to history ring buffer.
 function Stats:FinalizeDungeon()
+    local dungeon = getDungeon()
     if dungeon.costCopper <= 0 and dungeon.deathTaxCopper <= 0 then
         return -- Nothing to save
     end
@@ -184,6 +258,7 @@ local currentInstanceName = nil
 
 function Stats:OnEnterWorld()
     local inInstance, instanceType = IsInInstance()
+    local dungeon = getDungeon()
     if inInstance and (instanceType == "party" or instanceType == "raid") then
         local name = select(1, GetInstanceInfo())
 
@@ -194,9 +269,10 @@ function Stats:OnEnterWorld()
             end
             self:ResetDungeon()
 
+            local newDungeon = getDungeon()
             currentInstanceName = name
-            dungeon.instanceName = name
-            dungeon.startTime = GetServerTime()
+            newDungeon.instanceName = name
+            newDungeon.startTime = GetServerTime()
         end
     elseif not inInstance then
         if dungeon.startTime then
@@ -205,6 +281,11 @@ function Stats:OnEnterWorld()
             self:ResetDungeon()
         end
         currentInstanceName = nil
+    end
+
+    -- Refresh display to reflect content type change
+    if ShieldTax.Display then
+        ShieldTax.Display:Update()
     end
 end
 
@@ -224,23 +305,25 @@ end
 
 function Stats:OnKeystoneStart()
     -- M+ start — reset dungeon counter with keystone info
+    local dungeon = getDungeon()
     if dungeon.startTime then
         self:FinalizeDungeon()
     end
     self:ResetDungeon()
 
+    local newDungeon = getDungeon()
     local name = select(1, GetInstanceInfo())
-    dungeon.instanceName = name
-    dungeon.startTime = GetServerTime()
-    -- keystoneLevel would be set via C_ChallengeMode if available
+    newDungeon.instanceName = name
+    newDungeon.startTime = GetServerTime()
     if C_ChallengeMode and C_ChallengeMode.GetActiveKeystoneInfo then
-        dungeon.keystoneLevel = select(1, C_ChallengeMode.GetActiveKeystoneInfo())
+        newDungeon.keystoneLevel = select(1, C_ChallengeMode.GetActiveKeystoneInfo())
     end
 end
 
 function Stats:OnKeystoneCompleted()
     -- M+ completed — finalize and optionally auto-report
     self:FinalizeDungeon()
+    local dungeon = getDungeon()
     local cost = dungeon.costCopper
     local deathCost = dungeon.deathTaxCopper
     if cost > 0 or deathCost > 0 then
