@@ -71,7 +71,7 @@ function SoundManager:PlayTest()
 end
 
 --- Set the sound effect by key.
----@param key string One of: "coin", "money_open", "register", "coins", "none"
+---@param key string One of: "coin", "money_open", "auction", "levelup", "none"
 ---@return boolean valid Whether the key was valid
 function SoundManager:SetEffect(key)
     if not SOUND_DEFS[key] then

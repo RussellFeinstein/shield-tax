@@ -14,7 +14,7 @@ local MILESTONES = {
     { gold = 5000000, copper = 50000000000, msg = "5 million gold. You've Shield Blocked away a Mighty Caravan Brutosaur. You are the final boss of repair bills." },
 }
 
--- Humorous report templates. {dungeon}, {session}, {lifetime}, {dura_lost}, {events} are substituted.
+-- Humorous report templates. {current}, {content}, {lifetime}, {dura_lost} are substituted.
 local REPORT_TEMPLATES = {
     "[ShieldTax] My shield repair bill this {content}: {current}. Thanks, Shield Block.",
     "[ShieldTax] Shield Block has cost me {current} this {content}. Other tanks pay 0g for their active mitigation.",
@@ -56,7 +56,7 @@ function ChatReporter:Report(channel)
 
     -- Determine current content type and cost
     local contentType = tracker and tracker:GetContentType() or "other"
-    local contentLabels = { mythicplus="M+", raid="Raid", dungeon="Dungeon", openworld="Open World", other="Other" }
+    local contentLabels = ShieldTax.Tracker and ShieldTax.Tracker.CONTENT_LABELS or {}
     local contentLabel = contentLabels[contentType] or contentType
 
     local inInstance = IsInInstance()

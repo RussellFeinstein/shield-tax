@@ -10,12 +10,12 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 
 - **Real-time shield durability tracking** during combat
 - **Gold cost estimation** based on item level and quality
-- **Sound effects** when your shield loses durability (configurable: coin jingle, cash register, mute)
+- **Sound effects** when your shield loses durability (configurable: coin jingle, money bag, auction, level up, or mute)
 - **Death Tax** tracked separately — deaths don't inflate your Shield Block cost
 - **Warrior-only** — silently inactive on other classes
 - **12.0 (Midnight) compatible** — no CLEU dependency
 
-### Sound & Display (v0.4.0)
+### Sound & Display (v0.5.0)
 
 - On-screen gold counter display (draggable frame with dungeon + session cost)
 - Configurable sound effects: coin jingle, cash register, coin drop, money bag, or mute
@@ -24,7 +24,7 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 - Dungeon auto-detection (M+ keystones and regular dungeons/raids)
 - Dungeon history (last 50, ring buffer)
 
-### Content-Type Tracking (v0.4.0)
+### Content-Type Tracking (v0.5.0)
 
 - Track Shield Tax by content type: M+, Raid, Dungeon, Open World, Other
 - `/st stats` — view cost breakdown by content type
@@ -32,7 +32,7 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 - Lifetime, session, and dungeon history all record content type
 - Display tooltip shows per-content breakdown
 
-### Chat & Social (v0.4.0)
+### Chat & Social (v0.5.0)
 
 - `/st report` — share your Shield Tax in party/guild/say chat with randomized humorous messages
 - `/st history` — view your last 5 dungeon Shield Tax costs
@@ -56,16 +56,14 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 | Command | Action |
 |---------|--------|
 | `/st` | Toggle display frame |
-| `/st sound [coin\|register\|coins\|none]` | Set sound effect |
+| `/st sound [coin\|money_open\|auction\|levelup\|none]` | Set sound effect |
 | `/st sound test` | Play current sound |
-| `/st session` | Print session stats |
 | `/st lifetime` | Print lifetime stats |
-| `/st reset` | Reset dungeon counter |
-| `/st reset session` | Reset session counter |
-| `/st content [type]` | Toggle content-type tracking |
+| `/st content [type]` | View/toggle content-type display filter |
 | `/st stats` | Shield Tax by content type |
 | `/st report [party\|guild\|say]` | Share Shield Tax in chat |
 | `/st history` | Last 5 dungeon costs |
+| `/st reset` | Reset dungeon counter |
 | `/st reset all` | Reset ALL data |
 | `/st move` / `/st lock` | Unlock/lock display position |
 | `/st minimap` | Toggle minimap icon |
@@ -130,7 +128,8 @@ shield-tax/
 │   ├── test_stats.lua
 │   ├── test_display.lua
 │   ├── test_core.lua
-│   └── test_chat_reporter.lua
+│   ├── test_chat_reporter.lua
+│   └── test_content_types.lua
 ├── pkgmeta.yaml         # CurseForge packager config
 ├── CHANGELOG.md
 └── README.md
@@ -142,4 +141,4 @@ shield-tax/
 
 ## Version
 
-0.4.0
+0.5.0

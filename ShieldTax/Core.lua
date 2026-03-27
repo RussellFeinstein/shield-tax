@@ -2,7 +2,7 @@
 local ShieldTax = LibStub("AceAddon-3.0"):NewAddon("ShieldTax", "AceEvent-3.0", "AceConsole-3.0")
 _G.ShieldTax = ShieldTax
 
-ShieldTax.VERSION = "0.4.0"
+ShieldTax.VERSION = "0.5.0"
 
 local DB_DEFAULTS = {
     global = {
@@ -224,7 +224,7 @@ function ShieldTax:PrintLifetimeStats()
         end
         if hasData then
             self:Print("  By content:")
-            for key, label in pairs(CONTENT_LABELS) do
+            for key, label in pairs(getContentLabels()) do
                 local ct = byContent[key]
                 if ct and ct.costCopper > 0 then
                     self:Print("    " .. label .. ": " .. calc:FormatGold(ct.costCopper))
@@ -251,14 +251,10 @@ function ShieldTax:PrintHelp()
     self:Print("  /st version — Show version")
 end
 
--- Content type display names
-local CONTENT_LABELS = {
-    mythicplus = "M+",
-    raid       = "Raid",
-    dungeon    = "Dungeon",
-    openworld  = "Open World",
-    other      = "Other",
-}
+-- Content type display names (from Tracker module)
+local function getContentLabels()
+    return ShieldTax.Tracker and ShieldTax.Tracker.CONTENT_LABELS or {}
+end
 
 function ShieldTax:HandleContentCommand(arg)
     local db = self.db and self.db.profile
@@ -267,10 +263,10 @@ function ShieldTax:HandleContentCommand(arg)
     if not arg or arg == "" then
         -- Show current content type
         local currentType = self.Tracker and self.Tracker:GetContentType() or "unknown"
-        local currentLabel = CONTENT_LABELS[currentType] or currentType
+        local currentLabel = getContentLabels()[currentType] or currentType
         self:Print("Currently in: |cffFFD700" .. currentLabel .. "|r")
         self:Print("Content tracking toggles:")
-        for key, label in pairs(CONTENT_LABELS) do
+        for key, label in pairs(getContentLabels()) do
             local status = db.contentToggles[key] ~= false and "|cff00ff00ON|r" or "|cffff0000OFF|r"
             local marker = key == currentType and " <--" or ""
             self:Print("  " .. label .. ": " .. status .. marker)
@@ -280,7 +276,7 @@ function ShieldTax:HandleContentCommand(arg)
     end
 
     arg = arg:lower()
-    if not CONTENT_LABELS[arg] then
+    if not getContentLabels()[arg] then
         self:Print("Unknown content type: " .. arg)
         self:Print("Options: mythicplus, raid, dungeon, openworld, other")
         return
@@ -288,7 +284,7 @@ function ShieldTax:HandleContentCommand(arg)
 
     db.contentToggles[arg] = not (db.contentToggles[arg] ~= false)
     local status = db.contentToggles[arg] and "enabled" or "disabled"
-    self:Print(CONTENT_LABELS[arg] .. " tracking " .. status .. ".")
+    self:Print(getContentLabels()[arg] .. " tracking " .. status .. ".")
 end
 
 function ShieldTax:PrintContentStats()
@@ -300,7 +296,7 @@ function ShieldTax:PrintContentStats()
     self:Print("--- Shield Tax by Content ---")
     local byContent = lt.byContent or {}
     local totalShown = 0
-    for key, label in pairs(CONTENT_LABELS) do
+    for key, label in pairs(getContentLabels()) do
         local ct = byContent[key]
         if ct and ct.costCopper > 0 then
             self:Print(string.format("  %s: %s (%d events)",

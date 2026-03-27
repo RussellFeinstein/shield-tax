@@ -17,7 +17,15 @@ local shieldItemLink = nil
 -- Constants
 local DEATH_GUARD_DURATION = 5  -- seconds to ignore durability loss after death
 
--- Content type constants
+-- Content type constants and display labels (shared across modules)
+Tracker.CONTENT_LABELS = {
+    mythicplus = "M+",
+    raid       = "Raid",
+    dungeon    = "Dungeon",
+    openworld  = "Open World",
+    other      = "Other",
+}
+
 Tracker.CONTENT_TYPES = {
     MYTHICPLUS = "mythicplus",
     RAID = "raid",

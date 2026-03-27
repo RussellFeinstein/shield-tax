@@ -46,16 +46,25 @@ function MinimapButton:Init()
     icon = LDBIcon
 end
 
---- Update the LDB text with current dungeon cost.
+--- Update the LDB text with current content cost (matches display frame).
 function MinimapButton:Update()
     if not ldb then return end
 
     local stats = ShieldTax.Stats
     local calc = ShieldTax.CostCalculator
-    if not stats or not calc then return end
+    local tracker = ShieldTax.Tracker
+    if not stats or not calc or not tracker then return end
 
     local dg = stats:GetDungeon()
-    ldb.text = calc:FormatGold(dg.costCopper)
+    local inInstance = IsInInstance()
+    if inInstance and dg.startTime then
+        ldb.text = calc:FormatGold(dg.costCopper)
+    else
+        local contentType = tracker:GetContentType()
+        local ss = stats:GetSession()
+        local ctCost = ss.byContent[contentType] and ss.byContent[contentType].costCopper or 0
+        ldb.text = calc:FormatGold(ctCost)
+    end
 end
 
 --- Toggle minimap icon visibility.
@@ -89,7 +98,6 @@ function MinimapButton:ShowTooltip(tooltip)
 
     if stats and calc then
         local dg = stats:GetDungeon()
-        local ss = stats:GetSession()
         local charData = ShieldTax:GetCharData()
 
         tooltip:AddDoubleLine("Dungeon:", calc:FormatGold(dg.costCopper), 1, 1, 1, 1, 1, 1)

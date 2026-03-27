@@ -8,7 +8,6 @@ local frame
 local contentText
 local lifetimeText
 local statusText
-local titleText
 local shieldIcon
 local isLocked = true
 
@@ -140,7 +139,7 @@ function Display:Update()
         local dg = stats:GetDungeon()
         local inInstance = IsInInstance()
         local contentType = tracker:GetContentType()
-        local contentLabels = { mythicplus="M+", raid="Raid", dungeon="Dungeon", openworld="Open World", other="Other" }
+        local contentLabels = ShieldTax.Tracker and ShieldTax.Tracker.CONTENT_LABELS or {}
         local contentLabel = contentLabels[contentType] or contentType
 
         -- Hide entire frame if current content type is disabled

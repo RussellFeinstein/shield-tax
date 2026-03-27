@@ -25,7 +25,9 @@ WoW addon that tracks shield durability cost for Warriors. Built on Ace3 framewo
 - **Shield slot:** `GetInventorySlotInfo("SecondaryHandSlot")` — not hardcoded 17
 - **Death guard:** Both `PLAYER_ALIVE` and `PLAYER_UNGHOST` needed for all res paths
 - **Settings scope:** `profile` (per-character), stats scope: `global` (cross-character)
-- **Session data:** Local table, not SavedVariables — resets on /reload
+- **Session/dungeon data:** Persisted in SavedVariables (`charData.currentSession`, `charData.currentDungeon`). Survives /reload. Session resets on fresh login. Dungeon resets on instance change.
+- **Content labels:** Shared via `Tracker.CONTENT_LABELS` — single source of truth for display names
+- **Content toggles:** Display filters only — data always records regardless of toggle state
 
 ## Testing
 - Framework: busted (Lua 5.1)

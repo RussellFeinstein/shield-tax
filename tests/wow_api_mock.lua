@@ -124,7 +124,7 @@ end
 
 function _G.GetAddOnMetadata(addon, field)
     if addon == "ShieldTax" and field == "Version" then
-        return "0.2.0"
+        return "0.5.0"
     end
     return nil
 end
@@ -188,6 +188,8 @@ function FrameMT:SetText() end
 function FrameMT:SetFont() end
 function FrameMT:SetJustifyH() end
 function FrameMT:GetStringWidth() return 100 end
+function FrameMT:GetWidth() return 40 end
+function FrameMT:GetHeight() return 40 end
 
 function FrameMT:SetFrameStrata() end
 function FrameMT:StartMoving() end
