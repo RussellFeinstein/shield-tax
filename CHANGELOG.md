@@ -5,6 +5,22 @@ All notable changes to ShieldTax will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] — 2026-03-26
+
+**Milestone M4: Content-Type Tracking**
+
+### Added
+- Content-type detection: classifies combat as M+, Raid, Dungeon, Open World, or Other
+- Per-content-type lifetime stats (Shield Tax breakdown by M+ vs Raid vs Open World etc.)
+- Per-content-type session stats
+- Content type recorded on dungeon history entries
+- `/st content` — view and toggle tracking per content type (e.g., disable open world tracking)
+- `/st stats` — view Shield Tax breakdown by content type
+- `/st lifetime` now shows per-content breakdown when data exists
+- Display tooltip shows per-content-type cost breakdown
+- Content toggle settings in profile (default: all enabled)
+- Test coverage for content classification, toggles, per-type stats accumulation
+
 ## [0.3.0] — 2026-03-26
 
 **Milestone M3: Chat Reporting, LDB, and Polish**

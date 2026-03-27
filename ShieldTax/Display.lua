@@ -224,7 +224,18 @@ function Display:ShowTooltip()
             GameTooltip:AddLine(" ")
             GameTooltip:AddDoubleLine("Lifetime:", calc:FormatGold(lt.totalCostCopper), 0.7, 0.7, 1, 1, 1, 1)
             GameTooltip:AddDoubleLine("  Death Tax:", calc:FormatGold(lt.deathTaxCopper), 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
-            GameTooltip:AddDoubleLine("  Dura Events:", tostring(lt.totalDurabilityEvents), 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
+
+            -- Per-content breakdown
+            local byContent = lt.byContent
+            if byContent then
+                local labels = { mythicplus="M+", raid="Raid", dungeon="Dungeon", openworld="Open World", other="Other" }
+                for key, label in pairs(labels) do
+                    local ct = byContent[key]
+                    if ct and ct.costCopper > 0 then
+                        GameTooltip:AddDoubleLine("  " .. label .. ":", calc:FormatGold(ct.costCopper), 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
+                    end
+                end
+            end
         end
 
         if tracker then

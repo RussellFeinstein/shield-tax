@@ -15,7 +15,7 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 - **Warrior-only** — silently inactive on other classes
 - **12.0 (Midnight) compatible** — no CLEU dependency
 
-### Sound & Display (v0.3.0)
+### Sound & Display (v0.4.0)
 
 - On-screen gold counter display (draggable frame with dungeon + session cost)
 - Configurable sound effects: coin jingle, cash register, coin drop, money bag, or mute
@@ -24,7 +24,15 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 - Dungeon auto-detection (M+ keystones and regular dungeons/raids)
 - Dungeon history (last 50, ring buffer)
 
-### Chat & Social (v0.3.0)
+### Content-Type Tracking (v0.4.0)
+
+- Track Shield Tax by content type: M+, Raid, Dungeon, Open World, Other
+- `/st stats` — view cost breakdown by content type
+- `/st content` — toggle tracking per content type (e.g., disable open world)
+- Lifetime, session, and dungeon history all record content type
+- Display tooltip shows per-content breakdown
+
+### Chat & Social (v0.4.0)
 
 - `/st report` — share your Shield Tax in party/guild/say chat with randomized humorous messages
 - `/st history` — view your last 5 dungeon Shield Tax costs
@@ -54,6 +62,8 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 | `/st lifetime` | Print lifetime stats |
 | `/st reset` | Reset dungeon counter |
 | `/st reset session` | Reset session counter |
+| `/st content [type]` | Toggle content-type tracking |
+| `/st stats` | Shield Tax by content type |
 | `/st report [party\|guild\|say]` | Share Shield Tax in chat |
 | `/st history` | Last 5 dungeon costs |
 | `/st reset all` | Reset ALL data |
@@ -132,4 +142,4 @@ shield-tax/
 
 ## Version
 
-0.3.0
+0.4.0

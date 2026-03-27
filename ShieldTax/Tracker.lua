@@ -17,6 +17,51 @@ local shieldItemLink = nil
 -- Constants
 local DEATH_GUARD_DURATION = 5  -- seconds to ignore durability loss after death
 
+-- Content type constants
+Tracker.CONTENT_TYPES = {
+    MYTHICPLUS = "mythicplus",
+    RAID = "raid",
+    DUNGEON = "dungeon",
+    OPENWORLD = "openworld",
+    OTHER = "other",
+}
+
+--- Classify the current content type based on instance info.
+---@return string contentType One of the CONTENT_TYPES values
+function Tracker:GetContentType()
+    local inInstance, instanceType = IsInInstance()
+    if not inInstance then
+        return self.CONTENT_TYPES.OPENWORLD
+    end
+
+    -- Check for M+ first (C_ChallengeMode)
+    if C_ChallengeMode and C_ChallengeMode.GetActiveKeystoneInfo then
+        local level = C_ChallengeMode.GetActiveKeystoneInfo()
+        if level and level > 0 then
+            return self.CONTENT_TYPES.MYTHICPLUS
+        end
+    end
+
+    if instanceType == "raid" then
+        return self.CONTENT_TYPES.RAID
+    elseif instanceType == "party" then
+        return self.CONTENT_TYPES.DUNGEON
+    else
+        return self.CONTENT_TYPES.OTHER
+    end
+end
+
+--- Check if tracking is enabled for the given content type.
+---@param contentType string
+---@return boolean
+function Tracker:IsContentEnabled(contentType)
+    local db = ShieldTax.db and ShieldTax.db.profile
+    if not db or not db.contentToggles then return true end
+    local enabled = db.contentToggles[contentType]
+    if enabled == nil then return true end  -- default on
+    return enabled
+end
+
 function Tracker:Init()
     -- Get shield slot ID from API (not hardcoded)
     shieldSlot = GetInventorySlotInfo("SecondaryHandSlot")
@@ -127,17 +172,19 @@ function Tracker:OnDurabilityChanged()
     local durabilityLost = previousDurability - current
 
     if durabilityLost > 0 then
+        local contentType = self:GetContentType()
+
         -- Check death guard: ignore durability loss within DEATH_GUARD_DURATION of death
         if recentDeath and (GetTime() - deathTime) < DEATH_GUARD_DURATION then
             -- Attribute to death, not combat
             local costCopper = ShieldTax.CostCalculator:GetCostPerPoint(shieldItemLink) * durabilityLost
-            ShieldTax:OnDeathTaxEvent(costCopper)
-        elseif inCombat then
-            -- Shield Tax! Durability lost during combat
+            ShieldTax:OnDeathTaxEvent(costCopper, contentType)
+        elseif inCombat and self:IsContentEnabled(contentType) then
+            -- Shield Tax! Durability lost during combat in enabled content
             local costCopper = ShieldTax.CostCalculator:GetCostPerPoint(shieldItemLink) * durabilityLost
-            ShieldTax:OnShieldTaxEvent(costCopper, durabilityLost)
+            ShieldTax:OnShieldTaxEvent(costCopper, durabilityLost, contentType)
         end
-        -- Out-of-combat, non-death durability loss is ignored (shouldn't really happen for shields)
+        -- Out-of-combat, non-death, or disabled-content durability loss is ignored
     end
 
     -- Update snapshot

@@ -4,12 +4,18 @@ local ShieldTax = LibStub("AceAddon-3.0"):GetAddon("ShieldTax")
 local Stats = {}
 ShieldTax.Stats = Stats
 
+-- Per-content-type stat template
+local function newContentStats()
+    return { costCopper = 0, durabilityLost = 0, events = 0 }
+end
+
 -- Session data: local table, NOT saved — resets on logout and /reload
 local session = {
     costCopper = 0,
     durabilityLost = 0,
     durabilityEvents = 0,
     deathTaxCopper = 0,
+    byContent = {},
 }
 
 -- Current dungeon data: resets on instance entry or manual reset
@@ -18,6 +24,7 @@ local dungeon = {
     durabilityLost = 0,
     durabilityEvents = 0,
     deathTaxCopper = 0,
+    contentType = nil,
     instanceName = nil,
     keystoneLevel = nil,
     startTime = nil,
@@ -36,19 +43,33 @@ end
 --- Record a Shield Tax event (called from Core.lua).
 ---@param costCopper number
 ---@param durabilityLost number
-function Stats:RecordShieldTax(costCopper, durabilityLost)
+---@param contentType string|nil Content type
+function Stats:RecordShieldTax(costCopper, durabilityLost, contentType)
+    contentType = contentType or "other"
+
     session.costCopper = session.costCopper + costCopper
     session.durabilityLost = session.durabilityLost + durabilityLost
     session.durabilityEvents = session.durabilityEvents + 1
 
+    -- Per-content session stats
+    if not session.byContent[contentType] then
+        session.byContent[contentType] = newContentStats()
+    end
+    local sc = session.byContent[contentType]
+    sc.costCopper = sc.costCopper + costCopper
+    sc.durabilityLost = sc.durabilityLost + durabilityLost
+    sc.events = sc.events + 1
+
     dungeon.costCopper = dungeon.costCopper + costCopper
     dungeon.durabilityLost = dungeon.durabilityLost + durabilityLost
     dungeon.durabilityEvents = dungeon.durabilityEvents + 1
+    dungeon.contentType = contentType
 end
 
 --- Record a Death Tax event (called from Core.lua).
 ---@param costCopper number
-function Stats:RecordDeathTax(costCopper)
+---@param contentType string|nil Content type
+function Stats:RecordDeathTax(costCopper, contentType)
     session.deathTaxCopper = session.deathTaxCopper + costCopper
     dungeon.deathTaxCopper = dungeon.deathTaxCopper + costCopper
 end
@@ -61,6 +82,7 @@ function Stats:GetSession()
         durabilityLost = session.durabilityLost,
         durabilityEvents = session.durabilityEvents,
         deathTaxCopper = session.deathTaxCopper,
+        byContent = session.byContent,
     }
 end
 
@@ -72,6 +94,7 @@ function Stats:GetDungeon()
         durabilityLost = dungeon.durabilityLost,
         durabilityEvents = dungeon.durabilityEvents,
         deathTaxCopper = dungeon.deathTaxCopper,
+        contentType = dungeon.contentType,
         instanceName = dungeon.instanceName,
         keystoneLevel = dungeon.keystoneLevel,
         startTime = dungeon.startTime,
@@ -84,6 +107,7 @@ function Stats:ResetDungeon()
     dungeon.durabilityLost = 0
     dungeon.durabilityEvents = 0
     dungeon.deathTaxCopper = 0
+    dungeon.contentType = nil
     dungeon.instanceName = nil
     dungeon.keystoneLevel = nil
     dungeon.startTime = nil
@@ -95,6 +119,7 @@ function Stats:ResetSession()
     session.durabilityLost = 0
     session.durabilityEvents = 0
     session.deathTaxCopper = 0
+    session.byContent = {}
 end
 
 --- Save current dungeon to history ring buffer.
@@ -109,6 +134,7 @@ function Stats:FinalizeDungeon()
     local entry = {
         instanceName = dungeon.instanceName or "Unknown",
         keystoneLevel = dungeon.keystoneLevel,
+        contentType = dungeon.contentType,
         costCopper = dungeon.costCopper,
         durabilityLost = dungeon.durabilityLost,
         deathTaxCopper = dungeon.deathTaxCopper,

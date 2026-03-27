@@ -2,7 +2,7 @@
 local ShieldTax = LibStub("AceAddon-3.0"):NewAddon("ShieldTax", "AceEvent-3.0", "AceConsole-3.0")
 _G.ShieldTax = ShieldTax
 
-ShieldTax.VERSION = "0.3.0"
+ShieldTax.VERSION = "0.4.0"
 
 local DB_DEFAULTS = {
     global = {
@@ -18,6 +18,13 @@ local DB_DEFAULTS = {
         displayPosition = nil,
         minimapIcon = true,
         chatReportChannel = "PARTY",
+        contentToggles = {
+            mythicplus = true,
+            raid = true,
+            dungeon = true,
+            openworld = true,
+            other = true,
+        },
     },
 }
 
@@ -49,6 +56,14 @@ function ShieldTax:OnInitialize()
                 deathTaxCopper = 0,
                 dungeonCount = 0,
                 firstSeen = nil,
+                -- Per-content-type subtotals
+                byContent = {
+                    mythicplus = { costCopper = 0, durabilityLost = 0, events = 0 },
+                    raid       = { costCopper = 0, durabilityLost = 0, events = 0 },
+                    dungeon    = { costCopper = 0, durabilityLost = 0, events = 0 },
+                    openworld  = { costCopper = 0, durabilityLost = 0, events = 0 },
+                    other      = { costCopper = 0, durabilityLost = 0, events = 0 },
+                },
             },
             dungeonHistory = {},
             dungeonHistoryIndex = 1,
@@ -119,6 +134,10 @@ function ShieldTax:HandleSlashCommand(input)
         if self.ChatReporter then self.ChatReporter:Report(arg1) end
     elseif cmd == "history" then
         if self.ChatReporter then self.ChatReporter:PrintHistory() end
+    elseif cmd == "content" then
+        self:HandleContentCommand(arg1)
+    elseif cmd == "stats" then
+        self:PrintContentStats()
     elseif cmd == "minimap" then
         if self.MinimapButton then self.MinimapButton:Toggle() end
     else
@@ -202,6 +221,24 @@ function ShieldTax:PrintLifetimeStats()
     self:Print("  Death Tax: " .. calc:FormatGold(lt.deathTaxCopper))
     self:Print("  Durability lost: " .. lt.totalDurabilityLost .. " (" .. lt.totalDurabilityEvents .. " events)")
     self:Print("  Dungeons: " .. lt.dungeonCount)
+
+    -- Per-content breakdown
+    local byContent = lt.byContent
+    if byContent then
+        local hasData = false
+        for _, ct in pairs(byContent) do
+            if ct.costCopper > 0 then hasData = true; break end
+        end
+        if hasData then
+            self:Print("  By content:")
+            for key, label in pairs(CONTENT_LABELS) do
+                local ct = byContent[key]
+                if ct and ct.costCopper > 0 then
+                    self:Print("    " .. label .. ": " .. calc:FormatGold(ct.costCopper))
+                end
+            end
+        end
+    end
 end
 
 function ShieldTax:PrintHelp()
@@ -214,6 +251,8 @@ function ShieldTax:PrintHelp()
     self:Print("  /st reset — Reset dungeon counter")
     self:Print("  /st reset session — Reset session")
     self:Print("  /st reset all — Reset everything")
+    self:Print("  /st content [type] — Toggle content tracking")
+    self:Print("  /st stats — Shield Tax by content type")
     self:Print("  /st report [party|guild|say] — Report to chat")
     self:Print("  /st history — Last 5 dungeons")
     self:Print("  /st move / lock — Unlock/lock display")
@@ -221,11 +260,71 @@ function ShieldTax:PrintHelp()
     self:Print("  /st version — Show version")
 end
 
+-- Content type display names
+local CONTENT_LABELS = {
+    mythicplus = "M+",
+    raid       = "Raid",
+    dungeon    = "Dungeon",
+    openworld  = "Open World",
+    other      = "Other",
+}
+
+function ShieldTax:HandleContentCommand(arg)
+    local db = self.db and self.db.profile
+    if not db or not db.contentToggles then return end
+
+    if not arg or arg == "" then
+        self:Print("Content tracking toggles:")
+        for key, label in pairs(CONTENT_LABELS) do
+            local status = db.contentToggles[key] ~= false and "|cff00ff00ON|r" or "|cffff0000OFF|r"
+            self:Print("  " .. label .. ": " .. status)
+        end
+        self:Print("Toggle with: /st content <type>")
+        return
+    end
+
+    arg = arg:lower()
+    if not CONTENT_LABELS[arg] then
+        self:Print("Unknown content type: " .. arg)
+        self:Print("Options: mythicplus, raid, dungeon, openworld, other")
+        return
+    end
+
+    db.contentToggles[arg] = not (db.contentToggles[arg] ~= false)
+    local status = db.contentToggles[arg] and "enabled" or "disabled"
+    self:Print(CONTENT_LABELS[arg] .. " tracking " .. status .. ".")
+end
+
+function ShieldTax:PrintContentStats()
+    local charData = self:GetCharData()
+    if not charData then return end
+    local calc = self.CostCalculator
+    local lt = charData.lifetime
+
+    self:Print("--- Shield Tax by Content ---")
+    local byContent = lt.byContent or {}
+    local totalShown = 0
+    for key, label in pairs(CONTENT_LABELS) do
+        local ct = byContent[key]
+        if ct and ct.costCopper > 0 then
+            self:Print(string.format("  %s: %s (%d events)",
+                label, calc:FormatGold(ct.costCopper), ct.events))
+            totalShown = totalShown + 1
+        end
+    end
+    if totalShown == 0 then
+        self:Print("  No data yet.")
+    end
+    self:Print("  Total: " .. calc:FormatGold(lt.totalCostCopper))
+end
+
 --- Callback fired by Tracker when shield durability is lost during combat.
 ---@param costCopper number Gold cost of the durability loss in copper
 ---@param durabilityLost number Number of durability points lost
-function ShieldTax:OnShieldTaxEvent(costCopper, durabilityLost)
+---@param contentType string Content type (mythicplus, raid, dungeon, openworld, other)
+function ShieldTax:OnShieldTaxEvent(costCopper, durabilityLost, contentType)
     if not costCopper or costCopper <= 0 then return end
+    contentType = contentType or "other"
 
     local charData = self:GetCharData()
     if not charData then return end
@@ -237,13 +336,23 @@ function ShieldTax:OnShieldTaxEvent(costCopper, durabilityLost)
     lifetime.totalDurabilityLost = lifetime.totalDurabilityLost + durabilityLost
     lifetime.totalDurabilityEvents = lifetime.totalDurabilityEvents + 1
 
+    -- Update per-content-type stats
+    if not lifetime.byContent then lifetime.byContent = {} end
+    if not lifetime.byContent[contentType] then
+        lifetime.byContent[contentType] = { costCopper = 0, durabilityLost = 0, events = 0 }
+    end
+    local ct = lifetime.byContent[contentType]
+    ct.costCopper = ct.costCopper + costCopper
+    ct.durabilityLost = ct.durabilityLost + durabilityLost
+    ct.events = ct.events + 1
+
     if not lifetime.firstSeen then
         lifetime.firstSeen = GetServerTime()
     end
 
     -- Update session/dungeon stats
     if self.Stats then
-        self.Stats:RecordShieldTax(costCopper, durabilityLost)
+        self.Stats:RecordShieldTax(costCopper, durabilityLost, contentType)
     end
 
     -- Play sound
@@ -269,7 +378,8 @@ end
 
 --- Callback fired by Tracker when durability is lost due to death.
 ---@param costCopper number Gold cost of the death durability loss in copper
-function ShieldTax:OnDeathTaxEvent(costCopper)
+---@param contentType string Content type
+function ShieldTax:OnDeathTaxEvent(costCopper, contentType)
     local charData = self:GetCharData()
     if not charData then return end
 
@@ -277,7 +387,7 @@ function ShieldTax:OnDeathTaxEvent(costCopper)
 
     -- Update session/dungeon stats
     if self.Stats then
-        self.Stats:RecordDeathTax(costCopper)
+        self.Stats:RecordDeathTax(costCopper, contentType)
     end
 
     -- Update display
