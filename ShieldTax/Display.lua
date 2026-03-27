@@ -5,8 +5,8 @@ local Display = {}
 ShieldTax.Display = Display
 
 local frame
-local dungeonText
-local sessionText
+local contentText
+local lifetimeText
 local statusText
 local shieldIcon
 local isLocked = true
@@ -25,7 +25,7 @@ function Display:Init()
     end
 
     frame = CreateFrame("Frame", "ShieldTaxFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(200, 60)
+    frame:SetSize(220, 62)
     frame:SetFrameStrata("MEDIUM")
     frame:SetClampedToScreen(true)
 
@@ -41,23 +41,30 @@ function Display:Init()
 
     -- Shield icon
     shieldIcon = frame:CreateTexture(nil, "ARTWORK")
-    shieldIcon:SetSize(24, 24)
-    shieldIcon:SetPoint("LEFT", frame, "LEFT", 8, 0)
+    shieldIcon:SetSize(40, 40)
+    shieldIcon:SetPoint("TOPLEFT", frame, "TOPLEFT", 8, -10)
     shieldIcon:SetTexture("Interface\\Icons\\INV_Shield_04")
     shieldIcon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 
-    -- Dungeon cost (main line)
-    dungeonText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    dungeonText:SetPoint("TOPLEFT", shieldIcon, "TOPRIGHT", 6, 2)
-    dungeonText:SetJustifyH("LEFT")
-    dungeonText:SetText("0g")
+    -- Title
+    local titleText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    titleText:SetPoint("TOPLEFT", shieldIcon, "TOPRIGHT", 6, 0)
+    titleText:SetJustifyH("LEFT")
+    titleText:SetTextColor(1, 0.82, 0)  -- Gold/yellow
+    titleText:SetText("Shield Tax")
 
-    -- Session cost (secondary line)
-    sessionText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    sessionText:SetPoint("TOPLEFT", dungeonText, "BOTTOMLEFT", 0, -2)
-    sessionText:SetJustifyH("LEFT")
-    sessionText:SetTextColor(0.7, 0.7, 0.7)
-    sessionText:SetText("Session: 0g")
+    -- Dungeon cost (shown only in instances)
+    contentText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    contentText:SetPoint("TOPLEFT", titleText, "BOTTOMLEFT", 0, -2)
+    contentText:SetJustifyH("LEFT")
+    contentText:SetText("0g")
+
+    -- Lifetime cost
+    lifetimeText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    lifetimeText:SetPoint("TOPLEFT", contentText, "BOTTOMLEFT", 0, -2)
+    lifetimeText:SetJustifyH("LEFT")
+    lifetimeText:SetTextColor(0.7, 0.7, 0.7)
+    lifetimeText:SetText("Lifetime Total: 0g")
 
     -- Status text (shown when no shield equipped)
     statusText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -104,6 +111,9 @@ function Display:Init()
     else
         frame:Hide()
     end
+
+    -- Initial update to set correct state (hide dungeon line in cities, etc.)
+    self:Update()
 end
 
 --- Update the display with current stats.
@@ -113,28 +123,50 @@ function Display:Update()
     local tracker = ShieldTax.Tracker
     if tracker and not tracker:HasShield() then
         -- No shield — show inactive state
-        dungeonText:Hide()
-        sessionText:Hide()
+        contentText:Hide()
+        lifetimeText:Hide()
         statusText:Show()
         return
     end
 
     statusText:Hide()
-    dungeonText:Show()
-    sessionText:Show()
+    lifetimeText:Show()
 
     local calc = ShieldTax.CostCalculator
     local stats = ShieldTax.Stats
 
-    if stats then
+    if stats and tracker then
         local dg = stats:GetDungeon()
-        local ss = stats:GetSession()
+        local inInstance = IsInInstance()
+        local contentType = tracker:GetContentType()
+        local contentLabels = { mythicplus="M+", raid="Raid", dungeon="Dungeon", openworld="Open World", other="Other" }
+        local contentLabel = contentLabels[contentType] or contentType
 
-        local dungeonCost = calc:FormatGold(dg.costCopper)
-        dungeonText:SetText(dungeonCost)
+        -- Show current content cost (dungeon cost in instances, content-type cost in open world)
+        if inInstance and dg.startTime then
+            contentText:SetText(contentLabel .. ": " .. calc:FormatGold(dg.costCopper))
+        else
+            -- Show current content-type session cost from Stats
+            local ss = stats:GetSession()
+            local ctCost = ss.byContent[contentType] and ss.byContent[contentType].costCopper or 0
+            contentText:SetText(contentLabel .. ": " .. calc:FormatGold(ctCost))
+        end
+        contentText:Show()
+        lifetimeText:SetPoint("TOPLEFT", contentText, "BOTTOMLEFT", 0, -2)
 
-        local sessionCost = calc:FormatGold(ss.costCopper)
-        sessionText:SetText("Session: " .. sessionCost)
+        local charData = ShieldTax:GetCharData()
+        if charData then
+            lifetimeText:SetText("Lifetime Total: " .. calc:FormatGold(charData.lifetime.totalCostCopper))
+        end
+
+        -- Resize frame to fit content
+        local textWidth = math.max(
+            contentText:IsShown() and contentText:GetStringWidth() or 0,
+            lifetimeText:GetStringWidth()
+        )
+        -- icon width + gap + text + padding
+        local iconWidth = shieldIcon:GetWidth()
+        frame:SetWidth(iconWidth + 6 + textWidth + 24)
     end
 end
 
@@ -198,46 +230,43 @@ function Display:ShowTooltip()
     if not frame then return end
 
     GameTooltip:SetOwner(frame, "ANCHOR_BOTTOMRIGHT")
-    GameTooltip:SetText("ShieldTax", 1, 0.82, 0)
+    GameTooltip:SetText("Shield Tax", 1, 0.82, 0)
 
-    local stats = ShieldTax.Stats
     local calc = ShieldTax.CostCalculator
     local tracker = ShieldTax.Tracker
+    local charData = ShieldTax:GetCharData()
 
-    if stats and calc then
-        local dg = stats:GetDungeon()
-        local ss = stats:GetSession()
-        local charData = ShieldTax:GetCharData()
+    if calc and charData then
+        local lt = charData.lifetime
 
-        GameTooltip:AddDoubleLine("Dungeon:", calc:FormatGold(dg.costCopper), 1, 1, 1, 1, 1, 1)
-        if dg.deathTaxCopper > 0 then
-            GameTooltip:AddDoubleLine("  Death Tax:", calc:FormatGold(dg.deathTaxCopper), 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
-        end
+        -- Lifetime breakdown by content type
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine("Lifetime Breakdown", 0.7, 0.7, 1)
 
-        GameTooltip:AddDoubleLine("Session:", calc:FormatGold(ss.costCopper), 1, 1, 1, 1, 1, 1)
-        if ss.deathTaxCopper > 0 then
-            GameTooltip:AddDoubleLine("  Death Tax:", calc:FormatGold(ss.deathTaxCopper), 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
-        end
-
-        if charData then
-            local lt = charData.lifetime
-            GameTooltip:AddLine(" ")
-            GameTooltip:AddDoubleLine("Lifetime:", calc:FormatGold(lt.totalCostCopper), 0.7, 0.7, 1, 1, 1, 1)
-            GameTooltip:AddDoubleLine("  Death Tax:", calc:FormatGold(lt.deathTaxCopper), 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
-
-            -- Per-content breakdown
-            local byContent = lt.byContent
-            if byContent then
-                local labels = { mythicplus="M+", raid="Raid", dungeon="Dungeon", openworld="Open World", other="Other" }
-                for key, label in pairs(labels) do
-                    local ct = byContent[key]
-                    if ct and ct.costCopper > 0 then
-                        GameTooltip:AddDoubleLine("  " .. label .. ":", calc:FormatGold(ct.costCopper), 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
-                    end
+        local byContent = lt.byContent
+        if byContent then
+            local labels = { mythicplus="M+", raid="Raid", dungeon="Dungeon", openworld="Open World", other="Other" }
+            local hasData = false
+            for key, label in pairs(labels) do
+                local ct = byContent[key]
+                if ct and ct.costCopper > 0 then
+                    GameTooltip:AddDoubleLine("  " .. label .. ":", calc:FormatGold(ct.costCopper), 1, 1, 1, 1, 1, 1)
+                    hasData = true
                 end
+            end
+            if not hasData then
+                GameTooltip:AddLine("  No data yet", 0.5, 0.5, 0.5)
             end
         end
 
+        if lt.deathTaxCopper > 0 then
+            GameTooltip:AddDoubleLine("  Death Tax:", calc:FormatGold(lt.deathTaxCopper), 0.7, 0.5, 0.5, 0.7, 0.5, 0.5)
+        end
+
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddDoubleLine("Lifetime Total:", calc:FormatGold(lt.totalCostCopper), 1, 0.82, 0, 1, 1, 1)
+
+        -- Shield durability
         if tracker then
             local dura = tracker:GetShieldDurability()
             if dura then
@@ -247,8 +276,6 @@ function Display:ShowTooltip()
         end
     end
 
-    GameTooltip:AddLine(" ")
-    GameTooltip:AddLine("Left-click to drag (when unlocked)", 0.5, 0.5, 0.5)
     GameTooltip:Show()
 end
 

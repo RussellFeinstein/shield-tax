@@ -126,8 +126,6 @@ function ShieldTax:HandleSlashCommand(input)
         if self.Display then self.Display:Lock() end
     elseif cmd == "reset" then
         self:HandleResetCommand(arg1)
-    elseif cmd == "session" then
-        self:PrintSessionStats()
     elseif cmd == "lifetime" then
         self:PrintLifetimeStats()
     elseif cmd == "report" then
@@ -177,12 +175,6 @@ function ShieldTax:HandleResetCommand(arg)
             self:Print("Dungeon counter reset.")
         end
         if self.Display then self.Display:Update() end
-    elseif arg:lower() == "session" then
-        if self.Stats then
-            self.Stats:ResetSession()
-            self:Print("Session counter reset.")
-        end
-        if self.Display then self.Display:Update() end
     elseif arg:lower() == "all" then
         local charData = self:GetCharData()
         if charData then
@@ -209,17 +201,6 @@ function ShieldTax:HandleResetCommand(arg)
         if self.Display then self.Display:Update() end
         self:Print("All data reset.")
     end
-end
-
-function ShieldTax:PrintSessionStats()
-    if not self.Stats then return end
-    local calc = self.CostCalculator
-    local ss = self.Stats:GetSession()
-
-    self:Print("--- Session Stats ---")
-    self:Print("  Shield Tax: " .. calc:FormatGold(ss.costCopper))
-    self:Print("  Death Tax: " .. calc:FormatGold(ss.deathTaxCopper))
-    self:Print("  Durability lost: " .. ss.durabilityLost .. " (" .. ss.durabilityEvents .. " events)")
 end
 
 function ShieldTax:PrintLifetimeStats()
@@ -258,10 +239,8 @@ function ShieldTax:PrintHelp()
     self:Print("  /st — Toggle display frame")
     self:Print("  /st sound [coin|money_open|auction|levelup|none] — Set sound")
     self:Print("  /st sound test — Play current sound")
-    self:Print("  /st session — Session stats")
     self:Print("  /st lifetime — Lifetime stats")
     self:Print("  /st reset — Reset dungeon counter")
-    self:Print("  /st reset session — Reset session")
     self:Print("  /st reset all — Reset everything")
     self:Print("  /st content [type] — Toggle content tracking")
     self:Print("  /st stats — Shield Tax by content type")
@@ -286,10 +265,15 @@ function ShieldTax:HandleContentCommand(arg)
     if not db or not db.contentToggles then return end
 
     if not arg or arg == "" then
+        -- Show current content type
+        local currentType = self.Tracker and self.Tracker:GetContentType() or "unknown"
+        local currentLabel = CONTENT_LABELS[currentType] or currentType
+        self:Print("Currently in: |cffFFD700" .. currentLabel .. "|r")
         self:Print("Content tracking toggles:")
         for key, label in pairs(CONTENT_LABELS) do
             local status = db.contentToggles[key] ~= false and "|cff00ff00ON|r" or "|cffff0000OFF|r"
-            self:Print("  " .. label .. ": " .. status)
+            local marker = key == currentType and " <--" or ""
+            self:Print("  " .. label .. ": " .. status .. marker)
         end
         self:Print("Toggle with: /st content <type>")
         return

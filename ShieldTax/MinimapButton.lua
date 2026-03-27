@@ -93,7 +93,6 @@ function MinimapButton:ShowTooltip(tooltip)
         local charData = ShieldTax:GetCharData()
 
         tooltip:AddDoubleLine("Dungeon:", calc:FormatGold(dg.costCopper), 1, 1, 1, 1, 1, 1)
-        tooltip:AddDoubleLine("Session:", calc:FormatGold(ss.costCopper), 1, 1, 1, 1, 1, 1)
 
         if charData then
             local lt = charData.lifetime

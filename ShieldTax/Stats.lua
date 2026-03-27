@@ -83,14 +83,7 @@ function Stats:Init()
             Stats:ResetDungeon()
             currentInstanceName = nil
         end
-        if not isReloadingUi then
-            -- Only run zone detection on actual zone transitions, not /reload
-            Stats:OnEnterWorld()
-        end
-        -- Always refresh display
-        if ShieldTax.Display then
-            ShieldTax.Display:Update()
-        end
+        Stats:OnEnterWorld()
     end)
     ShieldTax:RegisterEvent("ZONE_CHANGED_NEW_AREA", function() Stats:OnZoneChanged() end)
     ShieldTax:RegisterEvent("CHALLENGE_MODE_START", function() Stats:OnKeystoneStart() end)

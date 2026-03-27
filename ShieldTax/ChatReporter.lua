@@ -16,13 +16,13 @@ local MILESTONES = {
 
 -- Humorous report templates. {dungeon}, {session}, {lifetime}, {dura_lost}, {events} are substituted.
 local REPORT_TEMPLATES = {
-    "[ShieldTax] My shield repair bill this dungeon: {dungeon}. Thanks, Shield Block.",
-    "[ShieldTax] Shield Block has cost me {dungeon} this dungeon. Other tanks pay 0g for their active mitigation.",
-    "[ShieldTax] Dungeon Shield Tax: {dungeon} ({dura_lost} durability hits). Blizzard pls.",
-    "[ShieldTax] Session Shield Tax so far: {session}. Every block has a price.",
+    "[ShieldTax] My shield repair bill this {content}: {current}. Thanks, Shield Block.",
+    "[ShieldTax] Shield Block has cost me {current} this {content}. Other tanks pay 0g for their active mitigation.",
+    "[ShieldTax] {content} Shield Tax: {current} ({dura_lost} durability hits). Blizzard pls.",
     "[ShieldTax] Lifetime Shield Tax: {lifetime}. I could have bought a mount with that.",
-    "[ShieldTax] {dungeon} this dungeon. {session} this session. Shield Block isn't free, folks.",
-    "[ShieldTax] Other tanks press their mitigation for free. I just paid {dungeon} to press mine.",
+    "[ShieldTax] {current} this {content}. {lifetime} lifetime. Shield Block isn't free, folks.",
+    "[ShieldTax] Other tanks press their mitigation for free. I just paid {current} to press mine.",
+    "[ShieldTax] Shield Tax so far today: {current} in {content}. {lifetime} lifetime. Cha-ching.",
 }
 
 local VALID_CHANNELS = {
@@ -52,17 +52,30 @@ function ChatReporter:Report(channel)
     local ss = stats:GetSession()
     local charData = ShieldTax:GetCharData()
     local lt = charData and charData.lifetime
+    local tracker = ShieldTax.Tracker
+
+    -- Determine current content type and cost
+    local contentType = tracker and tracker:GetContentType() or "other"
+    local contentLabels = { mythicplus="M+", raid="Raid", dungeon="Dungeon", openworld="Open World", other="Other" }
+    local contentLabel = contentLabels[contentType] or contentType
+
+    local inInstance = IsInInstance()
+    local currentCost
+    if inInstance and dg.startTime then
+        currentCost = dg.costCopper
+    else
+        currentCost = ss.byContent[contentType] and ss.byContent[contentType].costCopper or 0
+    end
 
     -- Pick a random template
     local template = REPORT_TEMPLATES[math.random(#REPORT_TEMPLATES)]
 
     -- Substitute variables
     local msg = template
-    msg = msg:gsub("{dungeon}", calc:FormatGold(dg.costCopper))
-    msg = msg:gsub("{session}", calc:FormatGold(ss.costCopper))
+    msg = msg:gsub("{current}", calc:FormatGold(currentCost))
+    msg = msg:gsub("{content}", contentLabel)
     msg = msg:gsub("{lifetime}", lt and calc:FormatGold(lt.totalCostCopper) or "0g")
     msg = msg:gsub("{dura_lost}", tostring(dg.durabilityLost))
-    msg = msg:gsub("{events}", tostring(dg.durabilityEvents))
 
     SendChatMessage(msg, channel)
 end
