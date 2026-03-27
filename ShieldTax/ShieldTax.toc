@@ -1,0 +1,16 @@
+## Interface: 120001
+## Title: ShieldTax
+## Notes: Tracks the hidden gold cost of Shield Block. Cha-ching!
+## Author: RussellFeinstein
+## Version: 0.1.0
+## SavedVariables: ShieldTaxDB
+## IconTexture: Interface\Icons\INV_Shield_04
+## X-Category: Combat
+## X-License: MIT
+## X-Website: https://github.com/RussellFeinstein/shield-tax
+
+embeds.xml
+
+Core.lua
+CostCalculator.lua
+Tracker.lua

@@ -1,0 +1,27 @@
+package-as: ShieldTax
+
+externals:
+  ShieldTax/Libs/LibStub:
+    url: https://repos.wowace.com/wow/libstub/trunk
+  ShieldTax/Libs/CallbackHandler-1.0:
+    url: https://repos.wowace.com/wow/callbackhandler/trunk/CallbackHandler-1.0
+  ShieldTax/Libs/AceAddon-3.0:
+    url: https://repos.wowace.com/wow/ace3/trunk/AceAddon-3.0
+  ShieldTax/Libs/AceEvent-3.0:
+    url: https://repos.wowace.com/wow/ace3/trunk/AceEvent-3.0
+  ShieldTax/Libs/AceConsole-3.0:
+    url: https://repos.wowace.com/wow/ace3/trunk/AceConsole-3.0
+  ShieldTax/Libs/AceDB-3.0:
+    url: https://repos.wowace.com/wow/ace3/trunk/AceDB-3.0
+  ShieldTax/Libs/LibDataBroker-1.1:
+    url: https://repos.wowace.com/wow/libdatabroker-1-1
+  ShieldTax/Libs/LibDBIcon-1.0:
+    url: https://repos.wowace.com/wow/libdbicon-1-0/trunk/LibDBIcon-1.0
+
+ignore:
+  - tests
+  - CLAUDE.md
+  - .luacheckrc
+  - .gitignore
+  - "*.md"
+  - "!README.md"

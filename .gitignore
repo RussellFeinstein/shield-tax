@@ -1,0 +1,24 @@
+# Libraries (managed by pkgmeta externals)
+ShieldTax/Libs/
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Lua
+*.luac
+luarocks/
+
+# WoW
+!ShieldTax.toc
+
+# Claude
+.claude/
