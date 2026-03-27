@@ -7,7 +7,7 @@ WoW addon that tracks shield durability cost for Warriors. Built on Ace3 framewo
 ### Key Files
 - `ShieldTax/Core.lua` — AceAddon bootstrap, class guard, slash commands, DB schema
 - `ShieldTax/Tracker.lua` — Combat state + `UPDATE_INVENTORY_DURABILITY` monitoring
-- `ShieldTax/CostCalculator.lua` — Gold cost formula from item quality/ilvl
+- `ShieldTax/CostCalculator.lua` — Repair cost via Tooltip API (`C_TooltipInfo`) + armor formula fallback
 - `ShieldTax/SoundManager.lua` — Sound playback with throttle (M2)
 - `ShieldTax/Display.lua` — Movable gold counter frame (M2)
 - `ShieldTax/Stats.lua` — Session/dungeon/lifetime statistics (M2)
@@ -17,7 +17,7 @@ WoW addon that tracks shield durability cost for Warriors. Built on Ace3 framewo
 1. `PLAYER_REGEN_DISABLED`/`ENABLED` → combat state flag
 2. `UPDATE_INVENTORY_DURABILITY` → shield slot durability delta
 3. In-combat + durability decreased + not dead → Shield Tax event
-4. CostCalculator computes copper cost from item info
+4. CostCalculator reads exact repair cost delta via `C_TooltipInfo.GetInventoryItem` (falls back to armor formula if unavailable)
 
 ### Key Design Decisions
 - **No CLEU:** Removed in Patch 12.0. Uses durability + combat state instead.

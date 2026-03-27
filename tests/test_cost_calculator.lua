@@ -115,6 +115,42 @@ describe("CostCalculator", function()
         end)
     end)
 
+    describe("GetRepairCost", function()
+        it("returns repair cost from tooltip API", function()
+            Mock.equipShield(639, 4, 100, 120, 1200000)
+            local addon = LibStub("AceAddon-3.0"):GetAddon("ShieldTax")
+            addon:OnInitialize()
+
+            -- Shield at 100/120 = 20 points damaged
+            -- fullRepairCost = 1200000, damageRatio = 20/120
+            local cost = calc:GetRepairCost(17)
+            assert.are.equal(200000, cost)  -- 20g
+        end)
+
+        it("returns 0 when shield is at full durability", function()
+            Mock.equipShield(639, 4, 120, 120, 1200000)
+            local cost = calc:GetRepairCost(17)
+            assert.are.equal(0, cost)
+        end)
+
+        it("returns nil when no item in slot", function()
+            -- No shield equipped, no fullRepairCost set
+            local cost = calc:GetRepairCost(17)
+            assert.is_nil(cost)
+        end)
+
+        it("returns nil when C_TooltipInfo is unavailable", function()
+            Mock.equipShield(639, 4, 100, 120, 1200000)
+            local saved = _G.C_TooltipInfo
+            _G.C_TooltipInfo = nil
+
+            local cost = calc:GetRepairCost(17)
+            assert.is_nil(cost)
+
+            _G.C_TooltipInfo = saved
+        end)
+    end)
+
     describe("FormatGold", function()
         it("formats 0 copper", function()
             assert.are.equal("0g", calc:FormatGold(0))

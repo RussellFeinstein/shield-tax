@@ -5,6 +5,9 @@ local CostCalculator = {}
 ShieldTax.CostCalculator = CostCalculator
 
 -- Quality multipliers (silver per durability point per ilvl unit above 32.5)
+-- NOTE: This is an armor-only approximation. Shields use different (higher)
+-- repair costs that have no documented formula. Prefer GetRepairCost() which
+-- reads the exact value from the game engine via C_TooltipInfo.
 local QUALITY_MULTIPLIERS = {
     [2] = 0.02,   -- Uncommon (Green)
     [3] = 0.025,  -- Rare (Blue)
@@ -65,6 +68,22 @@ function CostCalculator:CalculateCostPerPoint(ilvl, quality)
 
     -- Convert silver to copper (1 silver = 100 copper)
     return costSilver * 100
+end
+
+--- Get the exact repair cost for an inventory slot from the tooltip API.
+--- Returns the cost (in copper) to repair the item from current to max durability.
+--- Available in WoW 10.0.2+ (C_TooltipInfo).
+---@param slotID number The inventory slot ID
+---@return number|nil repairCost Cost in copper, or nil if unavailable
+function CostCalculator:GetRepairCost(slotID)
+    if not C_TooltipInfo or not C_TooltipInfo.GetInventoryItem then
+        return nil
+    end
+    local tooltipData = C_TooltipInfo.GetInventoryItem("player", slotID)
+    if tooltipData and tooltipData.repairCost then
+        return tooltipData.repairCost
+    end
+    return nil
 end
 
 --- Format a copper amount as a human-readable gold string.

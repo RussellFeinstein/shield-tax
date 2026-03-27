@@ -309,6 +309,86 @@ describe("Tracker", function()
         end)
     end)
 
+    describe("Tooltip API Cost", function()
+        local addon
+
+        before_each(function()
+            Mock.reset()
+            -- 120g full repair, max 120 dura = 10000 copper per point
+            Mock.equipShield(639, 4, 100, 120, 1200000)
+            loadAddon()
+            addon = LibStub("AceAddon-3.0"):GetAddon("ShieldTax")
+            addon:OnInitialize()
+            addon.Tracker:Init()
+        end)
+
+        it("uses tooltip API delta for cost calculation", function()
+            addon.Tracker:OnCombatStart()
+
+            -- Lose 2 durability: 100 -> 98
+            Mock.durability[17] = { 98, 120 }
+            addon.Tracker:OnDurabilityChanged()
+
+            -- Cost should be tooltip delta, not formula
+            -- Before: (120-100)/120 * 1200000 = 200000
+            -- After:  (120-98)/120  * 1200000 = 220000
+            -- Delta: 20000 copper = 2g
+            local charData = addon:GetCharData()
+            assert.are.equal(20000, charData.lifetime.totalCostCopper)
+        end)
+
+        it("accumulates cost across multiple events", function()
+            addon.Tracker:OnCombatStart()
+
+            -- Lose 1: 100 -> 99
+            Mock.durability[17] = { 99, 120 }
+            addon.Tracker:OnDurabilityChanged()
+
+            -- Lose 3 more: 99 -> 96
+            Mock.durability[17] = { 96, 120 }
+            addon.Tracker:OnDurabilityChanged()
+
+            -- Total: 4 points * 10000 copper/point = 40000
+            local charData = addon:GetCharData()
+            assert.are.equal(40000, charData.lifetime.totalCostCopper)
+        end)
+
+        it("uses tooltip API delta for death tax", function()
+            addon.Tracker:OnCombatStart()
+            Mock.gameTime = 200
+            addon.Tracker:OnPlayerDead()
+
+            -- Lose 10 durability from death: 100 -> 90
+            Mock.gameTime = 201
+            Mock.durability[17] = { 90, 120 }
+            addon.Tracker:OnDurabilityChanged()
+
+            -- Death cost: 10 * 10000 = 100000
+            local charData = addon:GetCharData()
+            assert.are.equal(0, charData.lifetime.totalCostCopper)
+            assert.are.equal(100000, charData.lifetime.deathTaxCopper)
+        end)
+
+        it("falls back to formula when tooltip API is unavailable", function()
+            -- Remove tooltip API
+            local saved = _G.C_TooltipInfo
+            _G.C_TooltipInfo = nil
+
+            -- Re-init to snapshot without API
+            addon.Tracker:Init()
+            addon.Tracker:OnCombatStart()
+
+            Mock.durability[17] = { 99, 120 }
+            addon.Tracker:OnDurabilityChanged()
+
+            -- Should use formula fallback: (639 - 32.5) * 0.05 * 100 * 1 = 3032.5
+            local charData = addon:GetCharData()
+            assert.are.near(3032.5, charData.lifetime.totalCostCopper, 1)
+
+            _G.C_TooltipInfo = saved
+        end)
+    end)
+
     describe("firstSeen", function()
         it("sets firstSeen on first Shield Tax event", function()
             Mock.reset()

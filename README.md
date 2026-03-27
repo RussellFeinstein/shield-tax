@@ -9,7 +9,7 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 ## Features
 
 - **Real-time shield durability tracking** during combat
-- **Gold cost estimation** based on item level and quality
+- **Accurate gold cost** via WoW Tooltip API (`C_TooltipInfo`) with formula fallback
 - **Sound effects** when your shield loses durability (coin jingle, money bag, auction, level up, or mute)
 - **On-screen display** with Shield Tax title, current content cost, and lifetime total
 - **Content-type tracking** — see your cost breakdown by M+, Raid, Dungeon, and Open World
@@ -58,17 +58,11 @@ Releases are automatically packaged and uploaded when a version tag is pushed.
 
 ## How It Works
 
-ShieldTax monitors your shield's durability via the `UPDATE_INVENTORY_DURABILITY` event. When durability decreases while you're in combat (and you haven't just died), it calculates the repair cost using your shield's item level and quality, plays a sound, and adds the cost to your running tally.
+ShieldTax monitors your shield's durability via the `UPDATE_INVENTORY_DURABILITY` event. When durability decreases while you're in combat (and you haven't just died), it reads the exact repair cost from the game's Tooltip API (`C_TooltipInfo.GetInventoryItem`), plays a sound, and adds the cost to your running tally.
 
-**Cost formula:** `(effectiveItemLevel - 32.5) x qualityMultiplier` silver per durability point
+**Cost calculation:** The addon snapshots your shield's repair cost before and after each durability change, then takes the delta. This gives the exact gold cost that the game would charge you at a vendor.
 
-| Quality | Multiplier |
-|---------|-----------|
-| Uncommon (Green) | 0.02 |
-| Rare (Blue) | 0.025 |
-| Epic (Purple) | 0.05 |
-
-*Note: This formula is approximate. Actual shield repair costs may vary slightly. Reputation discounts at vendors are not factored in.*
+*Note: If the Tooltip API is unavailable, the addon falls back to an armor-based formula estimate. Reputation discounts at vendors are not factored in.*
 
 ## Development
 
@@ -100,7 +94,7 @@ shield-tax/
 │   ├── ShieldTax.toc    # Addon manifest
 │   ├── Core.lua         # Init, class guard, slash commands
 │   ├── Tracker.lua      # Durability monitoring + combat state + content detection
-│   ├── CostCalculator.lua  # Gold cost formula
+│   ├── CostCalculator.lua  # Repair cost via Tooltip API + formula fallback
 │   ├── SoundManager.lua # Sound effects + throttle
 │   ├── Stats.lua        # Session/dungeon/lifetime stats (persisted)
 │   ├── Display.lua      # On-screen gold counter frame
@@ -127,4 +121,4 @@ shield-tax/
 
 ## Version
 
-1.0.4
+1.0.5

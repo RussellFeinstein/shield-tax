@@ -42,6 +42,9 @@ Mock.inCombatLockdown = false
 Mock.soundsPlayed = {}
 Mock.soundFilesPlayed = {}
 
+-- Full repair costs per slot (cost to repair from 0 to max durability)
+Mock.fullRepairCosts = {}
+
 -- Registered events and their handlers
 Mock.eventHandlers = {}
 Mock.registeredEvents = {}
@@ -153,6 +156,23 @@ function _G.C_ChallengeMode.GetActiveKeystoneInfo()
     return Mock.keystoneLevel or 0
 end
 Mock.keystoneLevel = nil
+
+-- C_TooltipInfo namespace (available since WoW 10.0.2)
+_G.C_TooltipInfo = _G.C_TooltipInfo or {}
+
+function _G.C_TooltipInfo.GetInventoryItem(unit, slotID)
+    local fullCost = Mock.fullRepairCosts[slotID]
+    if not fullCost then return nil end
+
+    local dura = Mock.durability[slotID]
+    if not dura then return nil end
+
+    local current, maximum = dura[1], dura[2]
+    if maximum == 0 then return { repairCost = 0 } end
+
+    local damageRatio = (maximum - current) / maximum
+    return { repairCost = math.floor(fullCost * damageRatio + 0.5) }
+end
 
 Mock.chatMessages = {}
 function _G.SendChatMessage(msg, chatType, language, target)
@@ -428,6 +448,7 @@ function Mock.reset()
     Mock.keystoneLevel = nil
     Mock.inCombatLockdown = false
     Mock.isDead = false
+    Mock.fullRepairCosts = {}
     Mock.soundsPlayed = {}
     Mock.soundFilesPlayed = {}
     Mock.chatMessages = {}
@@ -448,15 +469,17 @@ end
 ---@param quality number Item quality (default 4 = Epic)
 ---@param currentDura number Current durability (default 120)
 ---@param maxDura number Max durability (default 120)
-function Mock.equipShield(ilvl, quality, currentDura, maxDura)
+function Mock.equipShield(ilvl, quality, currentDura, maxDura, fullRepairCost)
     ilvl = ilvl or 639
     quality = quality or 4
     currentDura = currentDura or 120
     maxDura = maxDura or 120
+    fullRepairCost = fullRepairCost or 1200000  -- 120g default (1000 copper per point at max 120)
 
     local itemLink = "|cff0070dd|Hitem:12345:0:0:0:0:0:0:0:0|h[Test Shield]|h|r"
     Mock.equippedItems[17] = itemLink
     Mock.durability[17] = { currentDura, maxDura }
+    Mock.fullRepairCosts[17] = fullRepairCost
     Mock.itemInfoCache[itemLink] = {
         "Test Shield",       -- 1: name
         itemLink,            -- 2: link

@@ -8,6 +8,7 @@ ShieldTax.Tracker = Tracker
 local shieldSlot
 local previousDurability
 local maxDurability
+local previousRepairCost
 local inCombat = false
 local recentDeath = false
 local deathTime = 0
@@ -121,7 +122,7 @@ function Tracker:UpdateShieldInfo()
     end
 end
 
---- Snapshot current shield durability.
+--- Snapshot current shield durability and repair cost.
 function Tracker:SnapshotDurability()
     if not shieldSlot then return end
 
@@ -129,9 +130,11 @@ function Tracker:SnapshotDurability()
     if current and maximum then
         previousDurability = current
         maxDurability = maximum
+        previousRepairCost = ShieldTax.CostCalculator:GetRepairCost(shieldSlot) or 0
     else
         previousDurability = nil
         maxDurability = nil
+        previousRepairCost = nil
     end
 end
 
@@ -187,6 +190,16 @@ function Tracker:OnDurabilityChanged()
     if durabilityLost > 0 then
         local contentType = self:GetContentType()
 
+        -- Compute cost: prefer tooltip API delta over formula estimate
+        local currentRepairCost = ShieldTax.CostCalculator:GetRepairCost(shieldSlot)
+        local costCopper
+        if currentRepairCost and previousRepairCost then
+            costCopper = currentRepairCost - previousRepairCost
+        else
+            -- Fallback: armor formula estimate (undercounts shields, but better than nothing)
+            costCopper = ShieldTax.CostCalculator:GetCostPerPoint(shieldItemLink) * durabilityLost
+        end
+
         -- Death guard: check both the flag AND UnitIsDeadOrGhost as a fallback.
         -- UPDATE_INVENTORY_DURABILITY can fire before PLAYER_DEAD in the same frame,
         -- so recentDeath may not be set yet when durability loss from death arrives.
@@ -194,20 +207,17 @@ function Tracker:OnDurabilityChanged()
             or UnitIsDeadOrGhost("player")
 
         if isDead then
-            -- Attribute to death, not combat
-            local costCopper = ShieldTax.CostCalculator:GetCostPerPoint(shieldItemLink) * durabilityLost
             ShieldTax:OnDeathTaxEvent(costCopper, contentType)
         elseif inCombat then
-            -- Shield Tax! Always track, display toggles are filters not blockers
-            local costCopper = ShieldTax.CostCalculator:GetCostPerPoint(shieldItemLink) * durabilityLost
             ShieldTax:OnShieldTaxEvent(costCopper, durabilityLost, contentType)
         end
         -- Out-of-combat, non-death durability loss is ignored
     end
 
-    -- Update snapshot
+    -- Update snapshot (including repair cost for next delta calculation)
     previousDurability = current
     maxDurability = maximum
+    previousRepairCost = ShieldTax.CostCalculator:GetRepairCost(shieldSlot) or previousRepairCost
 end
 
 --- Get current shield durability as a fraction (0-1), or nil if no shield.
@@ -243,6 +253,7 @@ end
 function Tracker:Reset()
     previousDurability = nil
     maxDurability = nil
+    previousRepairCost = nil
     inCombat = false
     recentDeath = false
     deathTime = 0

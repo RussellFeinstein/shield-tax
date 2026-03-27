@@ -5,6 +5,13 @@ All notable changes to ShieldTax will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] — 2026-03-27
+
+### Fixed
+- Shield repair cost severely undercounted (~11x too low) — was using an armor-only formula that doesn't apply to shields
+- Now reads exact repair cost from WoW Tooltip API (`C_TooltipInfo.GetInventoryItem`) instead of estimating
+- Old armor formula kept as fallback if Tooltip API is unavailable
+
 ## [1.0.4] — 2026-03-27
 
 ### Fixed
