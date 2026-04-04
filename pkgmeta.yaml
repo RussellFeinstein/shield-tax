@@ -17,6 +17,10 @@ externals:
     url: https://repos.wowace.com/wow/ace3/trunk/AceConsole-3.0
   ShieldTax/Libs/AceDB-3.0:
     url: https://repos.wowace.com/wow/ace3/trunk/AceDB-3.0
+  ShieldTax/Libs/AceConfig-3.0:
+    url: https://repos.wowace.com/wow/ace3/trunk/AceConfig-3.0
+  ShieldTax/Libs/AceConfigDialog-3.0:
+    url: https://repos.wowace.com/wow/ace3/trunk/AceConfigDialog-3.0
   ShieldTax/Libs/LibDataBroker-1.1:
     url: https://repos.wowace.com/wow/libdatabroker-1-1
   ShieldTax/Libs/LibDBIcon-1.0:

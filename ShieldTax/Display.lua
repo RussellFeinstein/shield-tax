@@ -320,6 +320,26 @@ function Display:ShowTooltip()
     GameTooltip:Show()
 end
 
+--- Set display visibility directly (for options panel / spec guard).
+---@param enabled boolean
+function Display:SetEnabled(enabled)
+    if not frame then return end
+    local db = ShieldTax.db and ShieldTax.db.profile
+    if db then db.displayEnabled = enabled end
+    if enabled then
+        frame:Show()
+    else
+        frame:Hide()
+    end
+end
+
+--- Apply scale to the display frame immediately.
+---@param scale number
+function Display:SetScale(scale)
+    if not frame then return end
+    frame:SetScale(scale)
+end
+
 --- Check if the display frame is currently shown.
 ---@return boolean
 function Display:IsShown()

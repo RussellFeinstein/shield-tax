@@ -22,9 +22,10 @@ Inspired by [Kersplode's r/wow post](https://www.reddit.com/r/wow/comments/1s3qv
 - **Dungeon auto-detection** with per-dungeon history (last 50)
 - **Chat reporting** — share your Shield Tax with humorous randomized messages
 - **Milestone announcements** at real gold sink thresholds (Master Riding, Wooly Mammoth, Tundra Mammoth, Yak, Brutosaur)
-- **Minimap button** via LibDataBroker (left-click toggles display, right-click for help)
+- **Settings panel** — configure everything via ESC > Options > AddOns > ShieldTax
+- **Minimap button** via LibDataBroker (left-click toggles display, right-click opens settings)
 - **Data persists** through `/reload` — resets on fresh login
-- **Warrior-only** — silently inactive on other classes
+- **Protection spec only** — activates for Protection Warriors, sleeps for Arms/Fury, inactive on other classes
 - **12.0 (Midnight) compatible** — no CLEU dependency
 
 ### Future (v2.0.0 — Tank Tax)
@@ -45,7 +46,8 @@ Releases are automatically packaged and uploaded when a version tag is pushed.
 
 | Command | Action |
 |---------|--------|
-| `/st` | Toggle display frame |
+| `/st` | Open settings panel |
+| `/st display` | Toggle display frame |
 | `/st sound [coin\|money_open\|auction\|levelup\|none]` | Set sound effect |
 | `/st sound test` | Play current sound |
 | `/st lifetime` | Lifetime stats with content breakdown |
@@ -57,6 +59,7 @@ Releases are automatically packaged and uploaded when a version tag is pushed.
 | `/st reset all` | Reset ALL data |
 | `/st move` / `/st lock` | Unlock/lock display position |
 | `/st minimap` | Toggle minimap icon |
+| `/st options` | Open settings panel |
 | `/st version` | Show addon version |
 | `/st help` | List all commands |
 
@@ -103,7 +106,8 @@ shield-tax/
 │   ├── Stats.lua        # Session/dungeon/lifetime stats (persisted)
 │   ├── Display.lua      # On-screen gold counter frame
 │   ├── ChatReporter.lua # Chat reports + milestones
-│   └── MinimapButton.lua # LibDataBroker minimap icon
+│   ├── MinimapButton.lua # LibDataBroker minimap icon
+│   └── Options.lua      # AceConfig settings panel
 ├── tests/               # busted tests (not included in addon)
 │   ├── wow_api_mock.lua
 │   ├── test_tracker.lua
@@ -113,7 +117,8 @@ shield-tax/
 │   ├── test_display.lua
 │   ├── test_core.lua
 │   ├── test_chat_reporter.lua
-│   └── test_content_types.lua
+│   ├── test_content_types.lua
+│   └── test_options.lua
 ├── pkgmeta.yaml         # CurseForge packager config
 ├── CHANGELOG.md
 └── README.md
@@ -125,4 +130,4 @@ shield-tax/
 
 ## Version
 
-1.0.6
+1.1.0

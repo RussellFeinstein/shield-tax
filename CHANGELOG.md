@@ -5,6 +5,23 @@ All notable changes to ShieldTax will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — 2026-04-04
+
+### Added
+- **Settings panel** accessible via ESC > Options > AddOns > ShieldTax (AceConfig-3.0)
+- All settings configurable from the panel: display, sound, content tracking, chat reporting
+- `/st options` and `/st config` slash commands to open settings
+- Bare `/st` now opens the settings panel (use `/st display` to toggle the frame)
+- Minimap button right-click now opens the settings panel
+- **Protection spec guard** — addon only activates for Protection Warriors, not Arms or Fury
+- Automatic activate/deactivate on spec switch (no reload needed)
+- `Display:SetEnabled()`, `Display:SetScale()`, `MinimapButton:SetShown()` helper methods
+
+### Changed
+- `/st` opens settings panel instead of toggling display frame
+- Minimap button right-click opens settings instead of printing help
+- Module initialization deferred until Protection spec is confirmed
+
 ## [1.0.6] — 2026-04-04
 
 ### Fixed

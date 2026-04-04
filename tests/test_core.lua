@@ -7,6 +7,7 @@ local function loadAddon()
     package.loaded["ShieldTax.SoundManager"] = nil
     package.loaded["ShieldTax.Stats"] = nil
     package.loaded["ShieldTax.Display"] = nil
+    package.loaded["ShieldTax.Options"] = nil
     dofile("ShieldTax/Core.lua")
     dofile("ShieldTax/CostCalculator.lua")
     dofile("ShieldTax/Tracker.lua")
@@ -15,6 +16,7 @@ local function loadAddon()
     dofile("ShieldTax/Display.lua")
     dofile("ShieldTax/ChatReporter.lua")
     dofile("ShieldTax/MinimapButton.lua")
+    dofile("ShieldTax/Options.lua")
 end
 
 describe("Core", function()
@@ -37,9 +39,21 @@ describe("Core", function()
             addon:HandleSlashCommand("help")
         end)
 
-        it("handles /st with no args (toggle display)", function()
-            addon.Display:Init()
+        it("handles /st with no args (opens settings)", function()
             addon:HandleSlashCommand("")
+        end)
+
+        it("handles /st options", function()
+            addon:HandleSlashCommand("options")
+        end)
+
+        it("handles /st config", function()
+            addon:HandleSlashCommand("config")
+        end)
+
+        it("handles /st display (toggle)", function()
+            addon.Display:Init()
+            addon:HandleSlashCommand("display")
         end)
 
         it("handles /st sound with no args (show current)", function()
@@ -132,6 +146,107 @@ describe("Core", function()
 
             -- Should not error, just print a message
             addon:HandleSlashCommand("version")
+        end)
+    end)
+
+    describe("Protection Spec Guard", function()
+        it("activates modules for Protection spec", function()
+            addon:OnEnable()
+            assert.is_true(addon.modulesActive)
+            assert.is_true(addon.modulesInitialized)
+        end)
+
+        it("skips module activation for Fury spec", function()
+            Mock.reset()
+            Mock.specIndex = 2  -- Fury
+            loadAddon()
+            addon = LibStub("AceAddon-3.0"):GetAddon("ShieldTax")
+            addon:OnInitialize()
+            addon:OnEnable()
+            assert.is_falsy(addon.modulesActive)
+            assert.is_falsy(addon.modulesInitialized)
+        end)
+
+        it("skips module activation for Arms spec", function()
+            Mock.reset()
+            Mock.specIndex = 1  -- Arms
+            loadAddon()
+            addon = LibStub("AceAddon-3.0"):GetAddon("ShieldTax")
+            addon:OnInitialize()
+            addon:OnEnable()
+            assert.is_falsy(addon.modulesActive)
+        end)
+
+        it("activates modules on spec switch to Protection", function()
+            Mock.reset()
+            Mock.specIndex = 2  -- Start as Fury
+            loadAddon()
+            addon = LibStub("AceAddon-3.0"):GetAddon("ShieldTax")
+            addon:OnInitialize()
+            addon:OnEnable()
+            assert.is_falsy(addon.modulesActive)
+
+            -- Switch to Protection
+            Mock.specIndex = 3
+            addon:OnSpecChanged()
+            assert.is_true(addon.modulesActive)
+            assert.is_true(addon.modulesInitialized)
+        end)
+
+        it("deactivates modules on spec switch from Protection", function()
+            addon:OnEnable()
+            assert.is_true(addon.modulesActive)
+
+            -- Switch to Fury
+            Mock.specIndex = 2
+            addon:OnSpecChanged()
+            assert.is_falsy(addon.modulesActive)
+        end)
+
+        it("double activation is idempotent", function()
+            addon:OnEnable()
+            assert.is_true(addon.modulesActive)
+            addon:ActivateModules()
+            assert.is_true(addon.modulesActive)
+        end)
+
+        it("slash commands don't error on non-Prot Warriors", function()
+            Mock.reset()
+            Mock.specIndex = 2  -- Fury
+            loadAddon()
+            addon = LibStub("AceAddon-3.0"):GetAddon("ShieldTax")
+            addon:OnInitialize()
+            addon:OnEnable()
+
+            -- All commands should not error even with no modules initialized
+            addon:HandleSlashCommand("")
+            addon:HandleSlashCommand("display")
+            addon:HandleSlashCommand("sound")
+            addon:HandleSlashCommand("lifetime")
+            addon:HandleSlashCommand("report")
+            addon:HandleSlashCommand("stats")
+            addon:HandleSlashCommand("minimap")
+        end)
+
+        it("IsProtectionSpec returns false when spec is nil", function()
+            Mock.specIndex = nil
+            assert.is_false(addon:IsProtectionSpec())
+        end)
+
+        it("re-activation after deactivation shows UI without re-init", function()
+            addon:OnEnable()
+            assert.is_true(addon.modulesInitialized)
+
+            -- Deactivate
+            Mock.specIndex = 2
+            addon:OnSpecChanged()
+            assert.is_falsy(addon.modulesActive)
+
+            -- Re-activate — should not re-init, just show UI
+            Mock.specIndex = 3
+            addon:OnSpecChanged()
+            assert.is_true(addon.modulesActive)
+            assert.is_true(addon.modulesInitialized)
         end)
     end)
 end)

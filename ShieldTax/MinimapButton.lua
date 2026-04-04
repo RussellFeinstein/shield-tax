@@ -22,7 +22,9 @@ function MinimapButton:Init()
                     ShieldTax.Display:Toggle()
                 end
             elseif button == "RightButton" then
-                ShieldTax:HandleSlashCommand("help")
+                if ShieldTax.Options then
+                    ShieldTax.Options:Open()
+                end
             end
         end,
         OnTooltipShow = function(tooltip)
@@ -84,6 +86,20 @@ function MinimapButton:Toggle()
     end
 end
 
+--- Set minimap icon visibility directly (for options panel / spec guard).
+---@param shown boolean
+function MinimapButton:SetShown(shown)
+    if not icon then return end
+    local db = ShieldTax.db and ShieldTax.db.profile
+    if not db then return end
+    db.minimapIcon = shown
+    if shown then
+        icon:Show("ShieldTax")
+    else
+        icon:Hide("ShieldTax")
+    end
+end
+
 --- Show tooltip with stats summary.
 function MinimapButton:ShowTooltip(tooltip)
     if not tooltip then return end
@@ -121,6 +137,6 @@ function MinimapButton:ShowTooltip(tooltip)
 
     tooltip:AddLine(" ")
     tooltip:AddLine("Left-click: Toggle display", 0.5, 0.5, 0.5)
-    tooltip:AddLine("Right-click: Help", 0.5, 0.5, 0.5)
+    tooltip:AddLine("Right-click: Settings", 0.5, 0.5, 0.5)
     tooltip:Show()
 end

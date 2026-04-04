@@ -5,13 +5,14 @@
 WoW addon that tracks shield durability cost for Warriors. Built on Ace3 framework.
 
 ### Key Files
-- `ShieldTax/Core.lua` — AceAddon bootstrap, class guard, slash commands, DB schema
+- `ShieldTax/Core.lua` — AceAddon bootstrap, class/spec guards, slash commands, DB schema
 - `ShieldTax/Tracker.lua` — Combat state + `UPDATE_INVENTORY_DURABILITY` monitoring
 - `ShieldTax/CostCalculator.lua` — Repair cost via Tooltip API (`C_TooltipInfo`) + armor formula fallback
 - `ShieldTax/SoundManager.lua` — Sound playback with throttle (M2)
 - `ShieldTax/Display.lua` — Movable gold counter frame (M2)
 - `ShieldTax/Stats.lua` — Session/dungeon/lifetime statistics (M2)
 - `ShieldTax/ChatReporter.lua` — Chat report templates + milestone announcements (M3)
+- `ShieldTax/Options.lua` — AceConfig-3.0 settings panel (ESC > Options > AddOns)
 
 ### Detection Pipeline (12.0 compatible — no CLEU)
 1. `PLAYER_REGEN_DISABLED`/`ENABLED` → combat state flag
@@ -22,6 +23,7 @@ WoW addon that tracks shield durability cost for Warriors. Built on Ace3 framewo
 ### Key Design Decisions
 - **No CLEU:** Removed in Patch 12.0. Uses durability + combat state instead.
 - **Class guard:** `UnitClass("player")` second return value (locale-independent token)
+- **Spec guard:** `GetSpecializationInfo()` checks for Protection (specID 73). Modules only activate for Prot spec. `PLAYER_SPECIALIZATION_CHANGED` handles runtime spec switches.
 - **Shield slot:** `GetInventorySlotInfo("SecondaryHandSlot")` — not hardcoded 17
 - **Death guard:** Both `PLAYER_ALIVE` and `PLAYER_UNGHOST` needed for all res paths
 - **Settings scope:** `profile` (per-character), stats scope: `global` (cross-character)

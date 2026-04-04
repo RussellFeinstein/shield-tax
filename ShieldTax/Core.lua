@@ -2,7 +2,7 @@
 local ShieldTax = LibStub("AceAddon-3.0"):NewAddon("ShieldTax", "AceEvent-3.0", "AceConsole-3.0")
 _G.ShieldTax = ShieldTax
 
-ShieldTax.VERSION = "1.0.6"
+ShieldTax.VERSION = "1.1.0"
 
 local DB_DEFAULTS = {
     global = {
@@ -70,6 +70,11 @@ function ShieldTax:OnInitialize()
         }
     end
 
+    -- Register settings panel (available regardless of spec)
+    if self.Options then
+        self.Options:Init()
+    end
+
     self:RegisterChatCommand("shieldtax", "HandleSlashCommand")
     self:RegisterChatCommand("st", "HandleSlashCommand")
 end
@@ -77,19 +82,59 @@ end
 function ShieldTax:OnEnable()
     if self.disabled then return end
 
-    -- Initialize modules
-    if self.Tracker then
-        self.Tracker:Init()
+    -- Listen for spec changes (all Warrior specs)
+    self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", "OnSpecChanged")
+
+    -- Only activate modules for Protection spec
+    if self:IsProtectionSpec() then
+        self:ActivateModules()
     end
-    if self.Stats then
-        self.Stats:Init()
+end
+
+--- Check if the player is currently Protection spec.
+---@return boolean
+function ShieldTax:IsProtectionSpec()
+    local specIndex = GetSpecialization()
+    if not specIndex then return false end
+    local specID = GetSpecializationInfo(specIndex)
+    return specID == 73  -- Protection Warrior
+end
+
+--- Handle spec change at runtime.
+function ShieldTax:OnSpecChanged()
+    if self:IsProtectionSpec() then
+        self:ActivateModules()
+    else
+        self:DeactivateModules()
     end
-    if self.Display then
-        self.Display:Init()
+end
+
+--- Initialize and show modules (first call inits, subsequent calls restore UI).
+function ShieldTax:ActivateModules()
+    if self.modulesActive then return end
+    self.modulesActive = true
+
+    if not self.modulesInitialized then
+        self.modulesInitialized = true
+        if self.Tracker then self.Tracker:Init() end
+        if self.Stats then self.Stats:Init() end
+        if self.Display then self.Display:Init() end
+        if self.MinimapButton then self.MinimapButton:Init() end
+    else
+        -- Modules already initialized — just restore UI visibility
+        local db = self.db and self.db.profile
+        if self.Display and db then self.Display:SetEnabled(db.displayEnabled) end
+        if self.MinimapButton and db then self.MinimapButton:SetShown(db.minimapIcon) end
     end
-    if self.MinimapButton then
-        self.MinimapButton:Init()
-    end
+end
+
+--- Hide UI when switching away from Protection spec.
+function ShieldTax:DeactivateModules()
+    if not self.modulesActive then return end
+    self.modulesActive = false
+
+    if self.Display then self.Display:SetEnabled(false) end
+    if self.MinimapButton then self.MinimapButton:SetShown(false) end
 end
 
 function ShieldTax:OnDisable()
@@ -110,8 +155,8 @@ function ShieldTax:HandleSlashCommand(input)
     local cmd, arg1 = self:GetArgs(input, 2)
     cmd = cmd and cmd:lower() or ""
 
-    if cmd == "" then
-        if self.Display then self.Display:Toggle() end
+    if cmd == "" or cmd == "options" or cmd == "config" then
+        if self.Options then self.Options:Open() end
     elseif cmd == "version" then
         self:Print("ShieldTax v" .. self.VERSION)
     elseif cmd == "help" or cmd == "?" then
@@ -236,7 +281,8 @@ end
 
 function ShieldTax:PrintHelp()
     self:Print("ShieldTax v" .. self.VERSION .. " Commands:")
-    self:Print("  /st — Toggle display frame")
+    self:Print("  /st — Open settings")
+    self:Print("  /st display — Toggle display frame")
     self:Print("  /st sound [coin|money_open|auction|levelup|none] — Set sound")
     self:Print("  /st sound test — Play current sound")
     self:Print("  /st lifetime — Lifetime stats")
@@ -248,6 +294,7 @@ function ShieldTax:PrintHelp()
     self:Print("  /st history — Last 5 dungeons")
     self:Print("  /st move / lock — Unlock/lock display")
     self:Print("  /st minimap — Toggle minimap icon")
+    self:Print("  /st options — Open settings")
     self:Print("  /st version — Show version")
 end
 

@@ -8,6 +8,7 @@ local function loadAddon()
     package.loaded["ShieldTax.SoundManager"] = nil
     package.loaded["ShieldTax.Stats"] = nil
     package.loaded["ShieldTax.Display"] = nil
+    package.loaded["ShieldTax.Options"] = nil
     dofile("ShieldTax/Core.lua")
     dofile("ShieldTax/CostCalculator.lua")
     dofile("ShieldTax/Tracker.lua")
@@ -16,6 +17,7 @@ local function loadAddon()
     dofile("ShieldTax/Display.lua")
     dofile("ShieldTax/ChatReporter.lua")
     dofile("ShieldTax/MinimapButton.lua")
+    dofile("ShieldTax/Options.lua")
 end
 
 describe("CostCalculator", function()

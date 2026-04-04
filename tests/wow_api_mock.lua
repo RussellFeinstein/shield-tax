@@ -38,6 +38,10 @@ Mock.instanceInfo = { "Test Dungeon", "party", 1, "Normal", 0, 0, false, 1, 5 }
 -- Combat lockdown
 Mock.inCombatLockdown = false
 
+-- Specialization (default: Protection Warrior)
+Mock.specIndex = 3
+Mock.specInfo = { [1] = 71, [2] = 72, [3] = 73 }  -- Arms, Fury, Protection
+
 -- Sound playback log
 Mock.soundsPlayed = {}
 Mock.soundFilesPlayed = {}
@@ -112,6 +116,14 @@ function _G.InCombatLockdown()
     return Mock.inCombatLockdown
 end
 
+function _G.GetSpecialization()
+    return Mock.specIndex
+end
+
+function _G.GetSpecializationInfo(specIndex)
+    return Mock.specInfo[specIndex]
+end
+
 Mock.isDead = false
 function _G.UnitIsDeadOrGhost(unit)
     return Mock.isDead
@@ -178,6 +190,10 @@ Mock.chatMessages = {}
 function _G.SendChatMessage(msg, chatType, language, target)
     table.insert(Mock.chatMessages, { msg = msg, channel = chatType })
 end
+
+-- Settings API (WoW 10.0+)
+_G.Settings = _G.Settings or {}
+function _G.Settings.OpenToCategory(category) end
 
 -- math.random seeding for reproducible tests
 math.randomseed(12345)
@@ -409,6 +425,25 @@ function LibDBIcon:Hide() end
 function LibDBIcon:IsRegistered() return false end
 
 ----------------------------------------------------------------------
+-- AceConfig-3.0 Mock
+----------------------------------------------------------------------
+
+local AceConfig = {}
+libs["AceConfig-3.0"] = AceConfig
+
+function AceConfig:RegisterOptionsTable(appName, options) end
+
+----------------------------------------------------------------------
+-- AceConfigDialog-3.0 Mock
+----------------------------------------------------------------------
+
+local AceConfigDialog = {}
+libs["AceConfigDialog-3.0"] = AceConfigDialog
+
+function AceConfigDialog:AddToBlizOptions(appName, displayName, parent) return {} end
+function AceConfigDialog:Open(appName) end
+
+----------------------------------------------------------------------
 -- AceEvent-3.0 Mock (mixed into addons via NewAddon)
 ----------------------------------------------------------------------
 -- Already handled by AceAddon RegisterEvent/UnregisterEvent
@@ -447,6 +482,8 @@ function Mock.reset()
     Mock.instanceType = nil
     Mock.keystoneLevel = nil
     Mock.inCombatLockdown = false
+    Mock.specIndex = 3
+    Mock.specInfo = { [1] = 71, [2] = 72, [3] = 73 }
     Mock.isDead = false
     Mock.fullRepairCosts = {}
     Mock.soundsPlayed = {}
