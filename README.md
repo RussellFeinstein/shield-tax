@@ -6,6 +6,10 @@ Warriors pay a per-press tax on their core active mitigation that no other tank 
 
 ShieldTax makes this invisible cost visible (and audible) with a running gold counter and a sound alert every time your shield takes the hit.
 
+## Background
+
+Inspired by [Kersplode's r/wow post](https://www.reddit.com/r/wow/comments/1s3qv05/warrior_tax_it_costs_25g_per_dungeon_to_press/) testing 20,000 damage instances to prove warriors pay ~25g extra per dungeon for pressing Shield Block — a finding [covered by PC Gamer](https://www.pcgamer.com/games/world-of-warcraft/wow-player-finds-out-it-costs-25-gold-more-for-them-per-dungeon-to-use-their-mitigation/). ShieldTax makes that invisible cost visible.
+
 ## Features
 
 - **Real-time shield durability tracking** during combat
@@ -31,7 +35,7 @@ ShieldTax makes this invisible cost visible (and audible) with a running gold co
 
 ## Installation
 
-1. Download from [CurseForge](https://www.curseforge.com/wow/addons/shieldtax) or [GitHub Releases](https://github.com/RussellFeinstein/shield-tax/releases)
+1. Download from [CurseForge](https://www.curseforge.com/wow/addons/shield-tax) or [GitHub Releases](https://github.com/RussellFeinstein/shield-tax/releases)
 2. Copy the `ShieldTax/` folder to your `World of Warcraft/_retail_/Interface/AddOns/` directory
 3. Log in on a Warrior character — the addon activates automatically
 
@@ -121,4 +125,4 @@ shield-tax/
 
 ## Version
 
-1.0.5
+1.0.6
